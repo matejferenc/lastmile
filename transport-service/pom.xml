@@ -11,6 +11,8 @@
     <packaging>war</packaging>
 
     <artifactId>transport-service</artifactId>
+    <packaging>war</packaging>
+
 
     <build>
         <plugins>
