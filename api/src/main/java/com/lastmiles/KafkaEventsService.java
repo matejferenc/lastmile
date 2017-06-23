@@ -58,7 +58,7 @@ public class KafkaEventsService implements AutoCloseable {
         }, 0, 30, TimeUnit.SECONDS);
     }
 
-    public <E extends CustomRecord> void startPolling(Class<E> cls, Consumer<E> consumer) {
+    public <E extends CustomRecord> void listen(Class<E> cls, Consumer<E> consumer) {
         pollers.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
