@@ -1,7 +1,9 @@
 package com.lastmiles;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import cz.atlascon.travny.data.BinaryWriter;
+import cz.atlascon.travny.records.CustomRecord;
 import cz.atlascon.travny.records.Record;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -11,11 +13,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -27,16 +28,14 @@ public class KafkaEventsService implements AutoCloseable {
     private final String kafkaBootstrapServers;
     private final Map<String, KafkaTopic> konsumers = Maps.newConcurrentMap();
     private final ScheduledExecutorService mainLoop = Executors.newScheduledThreadPool(1);
+    private final ConcurrentMap<Class, KafkaTopic> topics = Maps.newConcurrentMap();
     private final KafkaProducer<byte[], byte[]> producer;
     private final long pollTimeoutMillis;
     private final AtomicBoolean running = new AtomicBoolean();
 
-    public KafkaEventsService(String kafkaBootstrapServers,
-                              int kafkaProcessingThreads,
-                              int kafkaQueueSize,
-                              long pollTimeoutMillis) {
-        this.pollTimeoutMillis = pollTimeoutMillis;
-        LOGGER.info("Creating kafka consumer factory, bootstrap servers {}, threads {}", kafkaBootstrapServers, kafkaProcessingThreads);
+    public KafkaEventsService(String kafkaBootstrapServers) {
+        this.pollTimeoutMillis = 200;
+        LOGGER.info("Creating kafka consumer factory, bootstrap servers {}, threads {}", kafkaBootstrapServers, 2);
         this.kafkaBootstrapServers = kafkaBootstrapServers;
         this.producer = createProducer();
         mainLoop.scheduleAtFixedRate(new Runnable() {
@@ -54,6 +53,23 @@ public class KafkaEventsService implements AutoCloseable {
                 }
             }
         }, 0, 30, TimeUnit.SECONDS);
+    }
+
+    public <E extends CustomRecord> List<E> poll(Class<E> cls) {
+        final List<E> recs = Lists.newArrayList();
+        KafkaTopic topic = topics.computeIfAbsent(cls, c -> {
+            try {
+                return createConsumer(cls);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        Collection<KafkaTopicPartition> topicPartitions = topic.getTopicPartitions();
+        for (KafkaTopicPartition ktp : topicPartitions) {
+            List<E> l = ktp.poll();
+            recs.addAll(l);
+        }
+        return recs;
     }
 
     private KafkaProducer<byte[], byte[]> createProducer() {
@@ -117,16 +133,14 @@ public class KafkaEventsService implements AutoCloseable {
     /**
      * Creates new Kafka consumer for topic
      *
-     * @param topic
      * @return
      */
-    public KafkaTopic createConsumer(String topic) throws IOException {
+    public <E extends CustomRecord> KafkaTopic<E> createConsumer(Class<E> cls) throws IOException {
         Map<String, Object> consumerProps = Maps.newHashMap();
         consumerProps.put("bootstrap.servers", kafkaBootstrapServers);
         consumerProps.put("enable.auto.commit", false);
-        consumerProps.put("topic", topic);
         consumerProps.put("poll.timeout", pollTimeoutMillis);
-        KafkaTopic konsumer = new KafkaTopic(kafkaBootstrapServers, topic, pollTimeoutMillis);
+        KafkaTopic konsumer = new KafkaTopic(kafkaBootstrapServers, cls, pollTimeoutMillis);
         konsumer.refreshPartitionConsumers();
         konsumers.put(konsumer.getId(), konsumer);
         return konsumer;

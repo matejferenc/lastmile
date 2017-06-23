@@ -2,10 +2,13 @@ package com.lastmiles;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.Futures;
+import cz.atlascon.travny.data.BinaryReader;
+import cz.atlascon.travny.records.CustomRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -27,11 +30,10 @@ import java.util.function.Consumer;
  *
  *
  */
-public class KafkaTopicPartition implements AutoCloseable {
+public class KafkaTopicPartition<E extends CustomRecord> implements AutoCloseable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaTopicPartition.class);
     private final String konsumerId;
-    private final String topic;
     private final ExecutorService executorService;
     private final int partition;
     private final long pollTimeout;
@@ -39,29 +41,29 @@ public class KafkaTopicPartition implements AutoCloseable {
     private final KafkaConsumer konsumer;
     private String kafkaBootstrapServers;
     private volatile long offset;
+    private Class<E> cls;
 
 
-    public KafkaTopicPartition(String konsumerId,
+    public KafkaTopicPartition(Class<E> cls,
+                               String konsumerId,
                                String kafkaBootstrapServers,
-                               String topic,
                                int partition,
                                long pollTimeout,
                                ExecutorService executorService) throws IOException {
+        this.cls = cls;
         Preconditions.checkNotNull(konsumerId);
-        Preconditions.checkNotNull(topic);
         Preconditions.checkArgument(partition >= 0);
         Preconditions.checkArgument(pollTimeout >= 0);
         Preconditions.checkNotNull(executorService);
         Preconditions.checkNotNull(kafkaBootstrapServers);
         this.executorService = executorService;
         this.kafkaBootstrapServers = kafkaBootstrapServers;
-        this.topicPartition = new TopicPartition(topic, partition);
+        this.topicPartition = new TopicPartition(cls.getCanonicalName(), partition);
         this.konsumerId = konsumerId;
-        this.topic = topic;
         this.partition = partition;
         this.pollTimeout = pollTimeout;
         Future<KafkaConsumer> konsumerF = this.executorService.submit(() -> {
-            LOGGER.info("Creating consumer for partition {}, topic {}", partition, topic);
+            LOGGER.info("Creating consumer for partition {}, topic {}", partition, cls.getCanonicalName());
             Map<String, Object> props = Maps.newHashMap();
             props.put("bootstrap.servers", kafkaBootstrapServers);
             props.put("enable.auto.commit", false);
@@ -72,6 +74,23 @@ public class KafkaTopicPartition implements AutoCloseable {
         this.konsumer = Futures.getChecked(konsumerF, IOException.class);
         this.offset = getMinOffset();
         seek(offset);
+    }
+
+    public List<E> poll() {
+        final List<E> records = Lists.newCopyOnWriteArrayList();
+        Future<Integer> f = poll(new Consumer<ConsumerRecord<byte[], byte[]>>() {
+            @Override
+            public void accept(ConsumerRecord<byte[], byte[]> consumerRecord) {
+                try {
+                    E rec = BinaryReader.fromBytes(consumerRecord.value(), cls);
+                    records.add(rec);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+        Futures.getUnchecked(f);
+        return records;
     }
 
     /**
@@ -148,7 +167,7 @@ public class KafkaTopicPartition implements AutoCloseable {
     }
 
     public String getTopic() {
-        return topic;
+        return cls.getCanonicalName();
     }
 
     public long offset() {

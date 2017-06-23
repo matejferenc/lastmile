@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
+import cz.atlascon.travny.records.CustomRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
@@ -24,31 +25,31 @@ import java.util.stream.Collectors;
 /**
  * Created by trehak on 12.6.17.
  */
-public class KafkaTopic implements AutoCloseable {
+public class KafkaTopic<E extends CustomRecord> implements AutoCloseable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaTopic.class);
     private final String kafkaBootstrapServers;
-    private final String topic;
     private final String id;
     private final long pollTimeout;
     private final KafkaConsumer metadataKonsumer;
     private final ReentrantLock lock = new ReentrantLock();
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final ConcurrentMap<Integer, KafkaTopicPartition> topicPartitionMap = Maps.newConcurrentMap();
+    private Class<E> cls;
 
     public KafkaTopic(String kafkaBootstrapServers,
-                      String topic,
+                      Class<E> cls,
                       long pollTimeout) throws IOException {
+        this.cls = cls;
         this.id = KafkaTopicPartition.generateId();
         this.kafkaBootstrapServers = kafkaBootstrapServers;
-        this.topic = topic;
         this.pollTimeout = pollTimeout;
-        Preconditions.checkNotNull(topic);
+        Preconditions.checkNotNull(cls);
         Preconditions.checkArgument(pollTimeout >= 0);
         Preconditions.checkNotNull(executorService);
         Preconditions.checkNotNull(kafkaBootstrapServers);
         Future<KafkaConsumer> konsumerF = executorService.submit(() -> {
-            LOGGER.info("Creating metadata consumer for topic {}", topic);
+            LOGGER.info("Creating metadata consumer for topic {}", cls.getCanonicalName());
             Map<String, Object> props = Maps.newHashMap();
             props.put("bootstrap.servers", kafkaBootstrapServers);
             props.put("enable.auto.commit", false);
@@ -63,7 +64,7 @@ public class KafkaTopic implements AutoCloseable {
             Set<Integer> partitions = getPartitions();
             Sets.SetView<Integer> missing = Sets.difference(partitions, topicPartitionMap.keySet());
             for (Integer p : missing) {
-                KafkaTopicPartition kafkaTopicPartition = new KafkaTopicPartition(KafkaTopicPartition.generateId(), kafkaBootstrapServers, topic, p, pollTimeout, executorService);
+                KafkaTopicPartition kafkaTopicPartition = new KafkaTopicPartition(cls, KafkaTopicPartition.generateId(), kafkaBootstrapServers, p, pollTimeout, executorService);
                 topicPartitionMap.put(p, kafkaTopicPartition);
             }
         } finally {
@@ -73,7 +74,7 @@ public class KafkaTopic implements AutoCloseable {
 
     public Set<Integer> getPartitions() throws IOException {
         Future<Set<Integer>> f = executorService.submit(() -> {
-            List<PartitionInfo> pis = (List<PartitionInfo>) metadataKonsumer.listTopics().get(topic);
+            List<PartitionInfo> pis = (List<PartitionInfo>) metadataKonsumer.listTopics().get(cls.getCanonicalName());
             if (pis == null) {
                 return Sets.newHashSet();
             }
