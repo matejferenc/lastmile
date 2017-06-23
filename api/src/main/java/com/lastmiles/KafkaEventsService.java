@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * Created by trehak on 31.5.17.
@@ -27,6 +28,7 @@ public class KafkaEventsService implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaEventsService.class);
     private final String kafkaBootstrapServers;
     private final Map<String, KafkaTopic> konsumers = Maps.newConcurrentMap();
+    private final ExecutorService pollers = Executors.newFixedThreadPool(4);
     private final ScheduledExecutorService mainLoop = Executors.newScheduledThreadPool(1);
     private final ConcurrentMap<Class, KafkaTopic> topics = Maps.newConcurrentMap();
     private final KafkaProducer<byte[], byte[]> producer;
@@ -53,6 +55,21 @@ public class KafkaEventsService implements AutoCloseable {
                 }
             }
         }, 0, 30, TimeUnit.SECONDS);
+    }
+
+    public <E extends CustomRecord> void startPolling(Class<E> cls, Consumer<E> consumer) {
+        pollers.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                while (running.get()) {
+                    List<E> list = poll(cls);
+                    for (E e : list) {
+                        consumer.accept(e);
+                    }
+                }
+                return null;
+            }
+        });
     }
 
     public <E extends CustomRecord> List<E> poll(Class<E> cls) {

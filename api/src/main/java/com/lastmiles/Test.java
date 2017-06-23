@@ -2,7 +2,7 @@ package com.lastmiles;
 
 import io.test;
 
-import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Created by trehak on 23.6.17.
@@ -14,8 +14,12 @@ public class Test {
 
         eventsService.produce(new test().setTest("tets val"));
 
-        List<test> events = eventsService.poll(test.class);
-        System.out.println(events.size());
+        eventsService.startPolling(test.class, new Consumer<test>() {
+            @Override
+            public void accept(test test) {
+                System.out.println(test);
+            }
+        });
 
         eventsService.close();
     }
