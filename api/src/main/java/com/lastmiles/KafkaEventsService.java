@@ -75,7 +75,7 @@ public class KafkaEventsService implements AutoCloseable {
      * @param value
      * @return
      */
-    public Future<RecordMetadata> produceRawToTopic(String topic, byte[] key, byte[] value) {
+    private Future<RecordMetadata> produceRawToTopic(String topic, byte[] key, byte[] value) {
         Future<RecordMetadata> future = producer.send(new ProducerRecord<>(topic, key, value));
         return future;
     }
@@ -86,7 +86,7 @@ public class KafkaEventsService implements AutoCloseable {
      * @param record
      * @return
      */
-    public Future<RecordMetadata> produce(String topic, Record record) throws IOException {
+    private Future<RecordMetadata> produce(String topic, Record record) throws IOException {
         return produceRawToTopic(topic, null, BinaryWriter.toBytes(record));
     }
 
