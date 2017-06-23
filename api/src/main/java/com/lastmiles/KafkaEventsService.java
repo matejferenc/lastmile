@@ -12,6 +12,9 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -24,6 +27,7 @@ import java.util.function.Consumer;
 /**
  * Created by trehak on 31.5.17.
  */
+@Service
 public class KafkaEventsService implements AutoCloseable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaEventsService.class);
@@ -36,7 +40,8 @@ public class KafkaEventsService implements AutoCloseable {
     private final long pollTimeoutMillis;
     private final AtomicBoolean running = new AtomicBoolean(true);
 
-    public KafkaEventsService(String kafkaBootstrapServers) {
+    @Autowired
+    public KafkaEventsService(@Value("${kafka:ec2-35-158-118-82.eu-central-1.compute.amazonaws.com:9092}") String kafkaBootstrapServers) {
         this.pollTimeoutMillis = 200;
         LOGGER.info("Creating kafka consumer factory, bootstrap servers {}, threads {}", kafkaBootstrapServers, 2);
         this.kafkaBootstrapServers = kafkaBootstrapServers;
