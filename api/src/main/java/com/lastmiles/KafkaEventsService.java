@@ -2,6 +2,7 @@ package com.lastmiles;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.MoreExecutors;
 import cz.atlascon.travny.data.BinaryWriter;
 import cz.atlascon.travny.records.CustomRecord;
 import cz.atlascon.travny.records.Record;
@@ -33,7 +34,7 @@ public class KafkaEventsService implements AutoCloseable {
     private final ConcurrentMap<Class, KafkaTopic> topics = Maps.newConcurrentMap();
     private final KafkaProducer<byte[], byte[]> producer;
     private final long pollTimeoutMillis;
-    private final AtomicBoolean running = new AtomicBoolean();
+    private final AtomicBoolean running = new AtomicBoolean(true);
 
     public KafkaEventsService(String kafkaBootstrapServers) {
         this.pollTimeoutMillis = 200;
@@ -160,6 +161,14 @@ public class KafkaEventsService implements AutoCloseable {
         KafkaTopic konsumer = new KafkaTopic(kafkaBootstrapServers, cls, pollTimeoutMillis);
         konsumer.refreshPartitionConsumers();
         konsumers.put(konsumer.getId(), konsumer);
+        konsumer.getTopicPartitions().forEach(ktp -> {
+            KafkaTopicPartition kkk = (KafkaTopicPartition) ktp;
+            try {
+                kkk.seek(kkk.getMinOffset());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
         return konsumer;
     }
 
@@ -176,6 +185,7 @@ public class KafkaEventsService implements AutoCloseable {
         LOGGER.info("Closing konsumers executor service");
         LOGGER.info("Closing producer");
         producer.close(10, TimeUnit.SECONDS);
+        MoreExecutors.shutdownAndAwaitTermination(pollers, 10, TimeUnit.SECONDS);
     }
 
 }

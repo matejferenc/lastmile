@@ -2,6 +2,7 @@ package com.lastmiles;
 
 import io.test;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**
@@ -12,8 +13,6 @@ public class Test {
     public static void main(String[] args) throws Exception {
         KafkaEventsService eventsService = new KafkaEventsService("ec2-35-158-118-82.eu-central-1.compute.amazonaws.com:9092");
 
-        eventsService.produce(new test().setTest("tets val"));
-
         eventsService.startPolling(test.class, new Consumer<test>() {
             @Override
             public void accept(test test) {
@@ -21,7 +20,25 @@ public class Test {
             }
         });
 
-        eventsService.close();
+        final AtomicInteger cnt = new AtomicInteger(0);
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    for (int i = 0; i < 100; i++) {
+                        eventsService.produce(new test().setTest(cnt.incrementAndGet() + ""));
+                        Thread.sleep(1000);
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+        thread.start();
+
+
+        Thread.sleep(5000);
+
     }
 
 }
