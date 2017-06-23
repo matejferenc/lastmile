@@ -11,5 +11,59 @@
 
     <artifactId>api</artifactId>
 
+    <packaging>jar</packaging>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>cz.atlascon.travny.codegen.Codegen</mainClass>
+                    <arguments>
+                        <argument>-url</argument>
+                        <argument>http://ec2-35-158-118-82.eu-central-1.compute.amazonaws.com:8082/rest/s/all</argument>
+                        <argument>${project.build.directory}/generated-sources/java/</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>cz.atlascon</groupId>
+            <artifactId>travny</artifactId>
+        </dependency>
+
+    </dependencies>
 
 </project>
