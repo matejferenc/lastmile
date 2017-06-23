@@ -11,5 +11,11 @@
 
     <artifactId>transport-service</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>lastmile.com</groupId>
+            <artifactId>api</artifactId>
+        </dependency>
+    </dependencies>
 
 </project>
