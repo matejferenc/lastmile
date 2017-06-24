@@ -9,6 +9,8 @@ import com.lastmile.traveler.service.ServiceHandler;
 import com.lastmiles.TransferOffer;
 import com.lastmiles.TransferRequest;
 import java.util.List;
+import javax.inject.Singleton;
+import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 import javax.ws.rs.Produces;
@@ -17,13 +19,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
  *
  * @author David
  */
+@Singleton
+@Path("/traveler")
 @RestController
 public class ApiController {
     
@@ -56,7 +59,7 @@ public class ApiController {
 
     @Produces("application/json")
     @RequestMapping(value= "/offer/new", method = RequestMethod.POST)
-    public void getOfferById(@RequestBody TransferOffer to){ 
+    public void postOffer(@RequestBody TransferOffer to){ 
         
 	}  
 }
