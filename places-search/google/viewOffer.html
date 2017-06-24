@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Place Autocomplete</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #description {
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+      }
+
+      #infowindow-content .title {
+        font-weight: bold;
+      }
+
+      #infowindow-content {
+        display: none;
+      }
+
+      #map #infowindow-content {
+        display: inline;
+      }
+
+      #title {
+        color: #fff;
+        background-color: #4d90fe;
+        font-size: 25px;
+        font-weight: 500;
+        padding: 6px 12px;
+      }
+      #user-input-panel {
+        width: 30%;
+        float: left;
+      }
+      #distance {
+
+      }
+      form {
+        padding: 20px;
+      }
+      .requestItem {
+        height: 50px;
+        cursor: pointer;
+      }
+      .requestItem span {
+        font-size: 120%;
+      }
+    </style>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-datetimepicker.min.css">
+
+</head>
+<body>
+<script src="js/jquery-3.2.1.min.js"></script>
+<script src="js/bootstrap-datetimepicker.min.js"></script>
+<script src="js/bootstrap.js"></script>
+<div id="user-input-panel">
+    <form class="form-group">
+    <h2>Offer details</h2>
+    <br/>
+    <label for="state">Status:</label>
+    <input id="state" type="text" class="form-control" disabled>
+    <br/>
+    <label for="ride-id">Ride ID:</label>
+    <input id="ride-id" type="text" class="form-control" disabled>
+    <br/>
+    <label for="start-date">Date and time:</label>
+    <input id="start-date" type="datetime" class="form-control" disabled>
+    <br/>
+    <label for="price">Price:</label>
+    <input id="price" type="text" class="form-control" disabled>
+    <br/>
+    <label for="phone">Telephone number:</label>
+    <input id="phone" type="text" class="form-control" disabled>
+    <br/>
+    <label for="email">Email:</label>
+    <input id="email" type="email" class="form-control" disabled>
+    <br/>
+    <label for="people-count">Number of passengers:</label>
+    <input id="people-count" type="number" class="form-control" disabled>
+    <br/>
+    </form>
+</div>
+<div id="map"></div>
+<script>
+
+var map;
+var directionsDisplay;
+var directionsService;
+
+function loadOffer(){
+    var offerId = window.location.hash.substr(1);
+    $.getJSON("http://localhost:8085/rest/transport/offer/" + offerId, {}, function(data, status) {
+        console.log(data);
+        $('#price').val(data.price);
+        $('#state').val(data.state);
+        $('#ride-id').val(data.requestId);
+
+        loadRequest(data.requestId);
+    });
+};
+
+function loadRequest(requestId) {
+    $.getJSON("http://localhost:8085/rest/transport/request/" + requestId, {}, function(data, status) {
+        console.log(data);
+        $('#people-count').val(data.peopleCount);
+        $('#phone').val(data.phoneNumber);
+        $('#email').val(data.email);
+        var originGps = {
+            lat: data.placeFrom.lat,
+            lng: data.placeFrom.lon
+        };
+        var destinationGps = {
+            lat: data.placeTo.lat,
+            lng: data.placeTo.lon
+        };
+        var dateTime = new Date(data.requesteTime).toLocaleString();
+        $('#start-date').val(dateTime);
+
+        drawPath(originGps, destinationGps);
+    });
+};
+
+function drawPath(originGps, destinationGps) {
+    var request = {
+        origin: originGps,
+        destination: destinationGps,
+        travelMode: google.maps.TravelMode.DRIVING
+    };
+    directionsService.route(request, function (response, status) {
+        if (status == google.maps.DirectionsStatus.OK) {
+            directionsDisplay.setDirections(response);
+        }
+    });
+};
+
+      function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: 50.0755, lng: 14.4378},
+          zoom: 10
+        });
+        var types = document.getElementById('type-selector');
+        var strictBounds = document.getElementById('strict-bounds-selector');
+
+        google.maps.event.addListener(map, "click", function (e) {
+            //lat and lng is available in e object
+            var latLng = e.latLng;
+            console.log(latLng);
+        });
+
+        directionsService = new google.maps.DirectionsService();
+        directionsDisplay = new google.maps.DirectionsRenderer({ 'draggable': false, 'preserveViewport': false});
+        directionsDisplay.setMap(map);
+
+        loadOffer();
+      };
+
+$.postJSON = function(url, data, callback) {
+    return $.ajax({
+        'type': 'POST',
+        'url': url,
+        'contentType': 'application/json',
+        'data': JSON.stringify(data),
+        'dataType': 'json',
+        'success': callback,
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    });
+};
+
+$.putJSON = function(url, data, callback) {
+    return $.ajax({
+        'type': 'PUT',
+        'url': url,
+        'contentType': 'application/json',
+        'data': JSON.stringify(data),
+        'dataType': 'json',
+        'success': callback,
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    });
+};
+
+$.getJSON = function(url, requestData, callback) {
+    return $.ajax({
+        'type': 'GET',
+        'url': url,
+        'contentType': 'application/json',
+        'data': requestData,
+        'success': callback,
+        headers: {
+            'Accept': 'application/json'
+        }
+    });
+};
+
+
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBERgplsRjMcAkFoTcFVeq5Q7--TKxLVPA&libraries=places&callback=initMap"
+        async defer></script>
+</body>
+</html>
