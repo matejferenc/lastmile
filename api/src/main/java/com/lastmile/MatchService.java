@@ -114,10 +114,11 @@ public class MatchService {
         if (request == null || request.getState() != TransferRequestState.NEW) {
             return Lists.newArrayList();
         }
-        return offersForPendingRequests.get(requestId).stream()
+
+        return offersForPendingRequests.getOrDefault(requestId, Sets.newHashSet()).stream()
                 .map(offers::get)
                 .filter(Objects::nonNull)
-                .filter(transferOffer -> transferOffer.getState() == TransferOfferState.NEW)
+                .filter(transferOffer -> transferOffer.getState() == TransferOfferState.NEW || transferOffer.getState() == TransferOfferState.ACCEPTED)
                 .collect(Collectors.toList());
     }
 

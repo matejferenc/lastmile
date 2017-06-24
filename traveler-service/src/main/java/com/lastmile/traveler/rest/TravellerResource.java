@@ -1,8 +1,10 @@
 package com.lastmile.traveler.rest;
 
+import com.google.common.util.concurrent.Futures;
 import com.lastmile.KafkaEventsService;
 import com.lastmile.MatchService;
 import com.lastmiles.*;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.*;
@@ -10,6 +12,7 @@ import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Future;
 
 /**
  * Created by trehak on 24.6.17.
@@ -49,7 +52,9 @@ public class TravellerResource {
     @Path("/{requestId}")
     @DELETE
     public void deleteRequest(@PathParam("requestId") String requestId) throws IOException {
-        kafkaEventsService.produce(new TransferRequestCancel().setRequestId(requestId));
+        Future<RecordMetadata> future = kafkaEventsService.produce(new TransferRequestCancel().setRequestId(requestId));
+        RecordMetadata unchecked = Futures.getUnchecked(future);
+        System.out.println(unchecked.offset());
     }
 
     @Path("/offers/{requestId}")
