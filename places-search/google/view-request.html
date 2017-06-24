@@ -132,8 +132,10 @@
 
             if (data.state == "MATCHED") {
                 $("#offers-caption").html("<h2>Selected ride:</h2>")
+                $('#ride-state').css('background-color', '#5cb85c');
             } else if (data.state == "CANCELLED") {
                 $("#offers-caption").html("<h2>Request is cancelled</h2>")
+                $('#ride-state').css('background-color', '#f0ad4e');
             }
 
             var requestData = {
