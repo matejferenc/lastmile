@@ -43,7 +43,7 @@ public class NotificationService {
     }
 
     private void sendCreate(TransferRequest transferRequest) {
-        String msg = "You have created request for with id ";
+        String msg = "You have created request for a ride with id ";
         // Create a topic
         CreateTopicRequest createReq = new CreateTopicRequest().withName("CreateRequest");
         CreateTopicResult createRes = service.createTopic(createReq);
