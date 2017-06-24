@@ -1,6 +1,5 @@
-package com.lastmile.traveler.app;
+package com.lastmile.traveller.app;
 
-import com.lastmile.traveler.rest.ApiController;
 import com.lastmile.traveler.rest.TravellerResource;
 import cz.atlascon.travny.jax.TravnyCollectionMessageBodyReaderWriter;
 import cz.atlascon.travny.jax.TravnyMessageBodyReaderWriter;
@@ -27,6 +26,5 @@ public class Config extends ResourceConfig {
         register(TravnyMessageBodyReaderWriter.class);
         register(TravnyCollectionMessageBodyReaderWriter.class);
         register(TravellerResource.class);
-        register(ApiController.class);
     }
 }

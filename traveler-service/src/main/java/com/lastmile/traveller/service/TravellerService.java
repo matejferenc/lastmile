@@ -3,11 +3,11 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.lastmile.traveler.service;
+package com.lastmile.traveller.service;
 
 import com.lastmile.KafkaEventsService;
-import com.lastmile.traveler.rest.ApiController;
-import com.lastmile.traveler.utils.UuidGen;
+import com.lastmile.traveler.rest.TravellerResource;
+import com.lastmile.traveller.utils.UuidGen;
 import com.lastmiles.TransferOffer;
 import com.lastmiles.TransferRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +26,7 @@ import java.util.logging.Logger;
  * @author David
  */
 @Service
-public class TravelerService {
+public class TravellerService {
 
     private final KafkaEventsService kafkaEventsService;
 
@@ -37,14 +37,13 @@ public class TravelerService {
     private TransferRequest tr;
 
     @Autowired
-    public TravelerService(KafkaEventsService kafkaEventsService) throws IOException {
+    public TravellerService(KafkaEventsService kafkaEventsService) throws IOException {
         this.kafkaEventsService = kafkaEventsService;
         kafkaEventsService.listen(TransferOffer.class, transferOffer ->
                 addOffer(transferOffer));
     }
 
-    @Autowired
-    private ApiController apiController;
+ 
 
 
     public TransferRequest processRequest(TransferRequest tr) {
@@ -54,15 +53,14 @@ public class TravelerService {
             kafkaEventsService.produce(tr);
             return tr;
         } catch (IOException ex) {
-            Logger.getLogger(TravelerService.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(TravellerService.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
 
     }
 
     public void addOffer(TransferOffer to) {
-        addToMapOffer(to.getOfferId(), to);
-        apiController.postOffer(to);
+        addToMapOffer(to.getOfferId(), to);        
     }
 
     private TransferRequest assignRequest(TransferOffer to) {

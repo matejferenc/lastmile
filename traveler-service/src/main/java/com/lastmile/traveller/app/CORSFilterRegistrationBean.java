@@ -1,4 +1,4 @@
-package com.lastmile.traveler.app;
+package com.lastmile.traveller.app;
 
 
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
