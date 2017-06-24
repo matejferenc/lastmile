@@ -36,12 +36,13 @@ public class TransportService {
         return transferOffer;
     }
 
-    public TransferOffer cancelOffer(String offerId) throws IOException {
+    public TransferOffer cancelOffer(String offerId) throws Exception {
         TransferOffer offer = matchService.getOffer(offerId);
         if (offer != null) {
-            kafkaEventsService.produce(new TransferOfferCancel()
+            Future<RecordMetadata> produce = kafkaEventsService.produce(new TransferOfferCancel()
                     .setOfferId(offerId)
                     .setRequestId(offer.getRequestId()));
+            kafkaEventsService.wait(produce);
         }
         offer.setState(TransferOfferState.CANCELLED);
         return offer;
