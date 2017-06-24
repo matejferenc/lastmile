@@ -1,6 +1,5 @@
 package com.lastmile;
 
-import com.google.common.collect.Lists;
 import com.lastmiles.PlaceSearchRequest;
 import com.lastmiles.TransferRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +31,7 @@ public class SearchResource {
     @Consumes({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     public List<TransferRequest> search(PlaceSearchRequest request) {
-        return Lists.newArrayList(new TransferRequest().setMyName("abc"));
-//        return searchService.search(request);
+        return searchService.search(request);
     }
 
 }
