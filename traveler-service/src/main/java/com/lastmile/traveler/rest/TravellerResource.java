@@ -1,6 +1,5 @@
 package com.lastmile.traveler.rest;
 
-import com.google.common.util.concurrent.Futures;
 import com.lastmile.KafkaEventsService;
 import com.lastmile.MatchService;
 import com.lastmiles.*;
@@ -34,10 +33,11 @@ public class TravellerResource {
     @PUT
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @Consumes({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-    public TransferRequest newRequest(TransferRequest request) throws IOException {
+    public TransferRequest newRequest(TransferRequest request) throws Exception {
         request.setState(TransferRequestState.NEW);
         request.setRequestId(UUID.randomUUID().toString());
-        kafkaEventsService.produce(request);
+        Future<RecordMetadata> produce = kafkaEventsService.produce(request);
+        kafkaEventsService.wait(produce);
         return request;
     }
 
@@ -51,10 +51,9 @@ public class TravellerResource {
 
     @Path("/{requestId}")
     @DELETE
-    public void deleteRequest(@PathParam("requestId") String requestId) throws IOException {
+    public void deleteRequest(@PathParam("requestId") String requestId) throws Exception {
         Future<RecordMetadata> future = kafkaEventsService.produce(new TransferRequestCancel().setRequestId(requestId));
-        RecordMetadata unchecked = Futures.getUnchecked(future);
-        System.out.println(unchecked.offset());
+        kafkaEventsService.wait(future);
     }
 
     @Path("/offers/{requestId}")

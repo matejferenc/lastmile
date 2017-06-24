@@ -128,12 +128,12 @@
             $("#phone").val(data.phoneNumber);
 
 
-            var request = {
+            var requestData = {
                 origin: {"lat" : data.placeFrom.lat, "lng" : data.placeFrom.lon},
                 destination: {"lat" : data.placeTo.lat, "lng" : data.placeTo.lon},
                 travelMode: google.maps.TravelMode.DRIVING
             };
-            directionsService.route(request, function (response, status) {
+            directionsService.route(requestData, function (response, status) {
                 if (status == google.maps.DirectionsStatus.OK) {
                     directionsDisplay.setDirections(response);
                 }
