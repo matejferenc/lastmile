@@ -120,14 +120,35 @@ var data =
     ]
 ;
 
+function refreshFromServer() {
+    var bounds = map.getBounds();
+    var data = {
+        latNorth: bounds.getNorthEast().lat(),
+        latSouth: bounds.getSouthWest().lat(),
+        lonEast: bounds.getNorthEast().lng(),
+        lonWest: bounds.getSouthWest().lng()
+    };
+    $.postJSON('http://localhost:8087/rest/places/search', data, function(data, status) {
+        console.log(data);
+    });
+};
+
+var markers=[];
 function refresh() {
+refreshFromServer();
+    if (markers) {
+        $('#result-list').empty();
+        for (i = 0; i < markers.length; i++) {
+            markers[i].setMap(null);
+        }
+    }
     for (i = 0; i < data.length; i++) {
         var originGps = data[i].origin;
         var destinationGps = data[i].destination;
         var id = data[i].id;
 
-        createMarker(originGps);
-        createInvisibleEndMarker(destinationGps);
+        markers.push(createMarker(originGps));
+        markers.push(createInvisibleEndMarker(destinationGps));
 
         createResultRow(id, originGps, destinationGps);
 
@@ -139,12 +160,13 @@ var directionsDisplay;
 var endMarker;
 var activeId;
 function drawPath(id) {
+    console.log("drawing path for id: " + id);
+
     if (activeId && activeId == id) {
         return;
     };
 
     activeId = id;
-console.log("drawing path for id: " + id);
     var item;
     for (i = 0; i < data.length; i++) {
         if (data[i].id == id) {
@@ -229,6 +251,7 @@ function createInvisibleEndMarker(position) {
         var new_bounds = current_bounds.extend( marker_pos );
         map.fitBounds( new_bounds );
       }
+    return marker;
 };
 
 function createMarker(position) {
@@ -294,6 +317,10 @@ $.postJSON = function(url, data, callback) {
         directionsDisplay.setMap(map);
 
       };
+
+
+
+
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBERgplsRjMcAkFoTcFVeq5Q7--TKxLVPA&libraries=places&callback=initMap"
         async defer></script>
