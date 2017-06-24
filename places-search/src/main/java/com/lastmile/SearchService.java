@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -25,7 +24,7 @@ public class SearchService {
     private final KafkaEventsService kafkaEventsService;
 
     @Autowired
-    public SearchService(KafkaEventsService kafkaEventsService) throws IOException {
+    public SearchService(KafkaEventsService kafkaEventsService) throws Exception {
         this.kafkaEventsService = kafkaEventsService;
         kafkaEventsService.listen(TransferRequest.class, new Consumer<TransferRequest>() {
             @Override

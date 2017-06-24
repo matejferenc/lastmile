@@ -147,21 +147,24 @@
                 }
             });
 
-        });
-        $.getJSON("http://localhost:8086/rest/traveller/offers/" + requestId, function (data, status) {
-            var offersDiv = "";
-            for (var i = 0; i < data.length; i++) {
-                offersDiv += "<div class=\"offer\">";
-                offersDiv += "<table>";
-                offersDiv += "<tr><td>Price</td><td>" + data[i].price + "</td>";
-                offersDiv += "<tr><td>Phone</td><td>" + data[i].phoneNumber + "</td>";
-                offersDiv += "<tr><td>Email</td><td>" + data[i].email + "</td>";
-                offersDiv += "</table>";
-                offersDiv += "<input class='btn btn-warning' onclick=\"declineOffer(\'" + data[i].offerId + "\'); return false;\" type=\"submit\" value =\"Decline offer\">";
-                offersDiv += "<input class='btn btn-success' onclick=\"acceptOffer(\'" + data[i].offerId + "\'); return false;\" type=\"submit\" value =\"Accept offer\">";
-                offersDiv += "</div>";
-            }
-            $("#offers").html(offersDiv);
+            $.getJSON("http://localhost:8086/rest/traveller/offers/" + requestId, function (data, status) {
+                var offersDiv = "";
+                for (var i = 0; i < data.length; i++) {
+                    offersDiv += "<div class=\"offer\">";
+                    offersDiv += "<table>";
+                    offersDiv += "<tr><td>Price</td><td>" + data[i].price + "</td>";
+                    offersDiv += "<tr><td>Phone</td><td>" + data[i].phoneNumber + "</td>";
+                    offersDiv += "<tr><td>Email</td><td>" + data[i].email + "</td>";
+                    offersDiv += "</table>";
+                    if (request.state != "MATCHED") {
+                        offersDiv += "<input class='btn btn-warning' onclick=\"declineOffer(\'" + data[i].offerId + "\'); return false;\" type=\"submit\" value =\"Decline offer\">";
+                        offersDiv += "<input class='btn btn-success' onclick=\"acceptOffer(\'" + data[i].offerId + "\'); return false;\" type=\"submit\" value =\"Accept offer\">";
+                    }
+                    offersDiv += "</div>";
+                }
+                $("#offers").html(offersDiv);
+            });
+
         });
     });
 
