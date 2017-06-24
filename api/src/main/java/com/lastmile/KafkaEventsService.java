@@ -2,7 +2,6 @@ package com.lastmile;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import cz.atlascon.travny.data.BinaryWriter;
 import cz.atlascon.travny.records.CustomRecord;
@@ -36,7 +35,6 @@ public class KafkaEventsService implements AutoCloseable {
     private final Map<String, KafkaTopic> konsumers = Maps.newConcurrentMap();
     private final ExecutorService pollers = Executors.newCachedThreadPool();
     private final ScheduledExecutorService mainLoop = Executors.newScheduledThreadPool(1);
-    private final ConcurrentMap<Class, KafkaTopic> topics = Maps.newConcurrentMap();
     private final KafkaProducer<byte[], byte[]> producer;
     private final long pollTimeoutMillis;
     private final AtomicBoolean running = new AtomicBoolean(true);
@@ -65,25 +63,28 @@ public class KafkaEventsService implements AutoCloseable {
     }
 
     public void wait(Future<RecordMetadata> metadataFuture) throws Exception {
-        RecordMetadata unchecked = Futures.getUnchecked(metadataFuture);
-        String topic = unchecked.topic();
-        int partition = unchecked.partition();
-        long offset = unchecked.offset();
-        Class<?> aClass = Class.forName(topic);
-        KafkaTopic kt = topics.get(aClass);
-        KafkaTopicPartition ktp = kt.getTopicPartition(partition);
-        while (ktp.offset() < offset) {
-            Thread.sleep(25);
-        }
+//        RecordMetadata unchecked = Futures.getUnchecked(metadataFuture);
+//        String topic = unchecked.topic();
+//        int partition = unchecked.partition();
+//        long offset = unchecked.offset();
+//        Class<?> aClass = Class.forName(topic);
+//        KafkaTopic kt = topics.get(aClass);
+//        KafkaTopicPartition ktp = kt.getTopicPartition(partition);
+//        while (ktp.offset() < offset) {
+//            Thread.sleep(25);
+//        }
+        // TODO
+        Thread.sleep(1500);
     }
 
-    public <E extends CustomRecord> void listen(Class<E> cls, Consumer<E> consumer) throws IOException {
-        replayAll(cls, consumer);
+    public <E extends CustomRecord> void listen(Class<E> cls, Consumer<E> consumer) throws Exception {
+        final KafkaTopic<E> kafkaConsumer = createConsumer(cls);
+        replayAll(cls, consumer, kafkaConsumer);
         pollers.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
                 while (running.get()) {
-                    List<E> list = poll(cls);
+                    List<E> list = poll(cls, kafkaConsumer);
                     for (E e : list) {
                         consumer.accept(e);
                     }
@@ -94,14 +95,7 @@ public class KafkaEventsService implements AutoCloseable {
         });
     }
 
-    public <E extends CustomRecord> void replayAll(Class<E> cls, Consumer<E> consumer) throws IOException {
-        KafkaTopic topic = topics.computeIfAbsent(cls, c -> {
-            try {
-                return createConsumer(cls);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+    public <E extends CustomRecord> void replayAll(Class<E> cls, Consumer<E> consumer, KafkaTopic<E> topic) throws Exception {
         Collection<KafkaTopicPartition> topicPartitions = topic.getTopicPartitions();
         for (KafkaTopicPartition ktp : topicPartitions) {
             ktp.seek(ktp.getMinOffset());
@@ -111,17 +105,11 @@ public class KafkaEventsService implements AutoCloseable {
                 l.forEach(m -> consumer.accept(m));
             }
         }
+        topic.close();
     }
 
-    public <E extends CustomRecord> List<E> poll(Class<E> cls) {
+    private <E extends CustomRecord> List<E> poll(Class<E> cls, KafkaTopic<E> topic) {
         final List<E> recs = Lists.newArrayList();
-        KafkaTopic topic = topics.computeIfAbsent(cls, c -> {
-            try {
-                return createConsumer(cls);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
         Collection<KafkaTopicPartition> topicPartitions = topic.getTopicPartitions();
         for (KafkaTopicPartition ktp : topicPartitions) {
             List<E> l = ktp.poll();

@@ -6,7 +6,6 @@
 package com.lastmile.traveller.service;
 
 import com.lastmile.KafkaEventsService;
-import com.lastmile.traveler.rest.TravellerResource;
 import com.lastmile.traveller.utils.UuidGen;
 import com.lastmiles.TransferOffer;
 import com.lastmiles.TransferRequest;
@@ -37,13 +36,11 @@ public class TravellerService {
     private TransferRequest tr;
 
     @Autowired
-    public TravellerService(KafkaEventsService kafkaEventsService) throws IOException {
+    public TravellerService(KafkaEventsService kafkaEventsService) throws Exception {
         this.kafkaEventsService = kafkaEventsService;
         kafkaEventsService.listen(TransferOffer.class, transferOffer ->
                 addOffer(transferOffer));
     }
-
- 
 
 
     public TransferRequest processRequest(TransferRequest tr) {
@@ -60,7 +57,7 @@ public class TravellerService {
     }
 
     public void addOffer(TransferOffer to) {
-        addToMapOffer(to.getOfferId(), to);        
+        addToMapOffer(to.getOfferId(), to);
     }
 
     private TransferRequest assignRequest(TransferOffer to) {

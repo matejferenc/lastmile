@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -40,7 +39,7 @@ public class MatchService {
     }
 
     @PostConstruct
-    public void setup() throws IOException {
+    public void setup() throws Exception {
         // new request
         kafkaEventsService.listen(TransferRequest.class, transferRequest -> {
             requests.put(transferRequest.getRequestId(), transferRequest);
