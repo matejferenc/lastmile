@@ -51,6 +51,10 @@
       form {
         padding: 20px;
       }
+      .requestItem {
+        height: 30px;
+        cursor: pointer;
+      }
     </style>
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/bootstrap-datetimepicker.min.css">
@@ -63,11 +67,15 @@
 <div id="user-input-panel">
     <form class="form-group">
     <h2>Create an offer</h2>
+    <input id="refreshButton" onclick="refresh(); return false;" type="submit" value="Refresh map" class="btn btn-primary">
     <br/>
-    <input id="submit" onclick="submit();" type="submit" value="Create an offer" class="btn btn-primary">
+    <div id="result-list"></div>
+
     <br/>
-    <h2 id="distance"></h2>
-    <h2 id="duration"></h2>
+    <label for="price">Price:</label>
+    <input id="price" type="text" class="form-control">
+    <input id="submitButton" onclick="offer(); return false;" type="submit" value="Create an offer" class="btn btn-primary">
+    <br/>
     </form>
 </div>
 <div id="map"></div>
@@ -79,32 +87,166 @@
 
 <script>
 
-var data = {
+var map;
+var directionsService;
+
+var data =
     [
         {
+            id: 1,
             origin: {lat: 50.1058987, lng: 14.2688662},
             destination: {lat: 50.1612703, lng: 14.2593538}
         },
         {
+            id: 2,
             origin: {lat: 50.1058987, lng: 14.2688662},
             destination: {lat: 49.9478347, lng: 14.1045045}
         },
         {
+            id: 3,
             origin: {lat: 50.1058987, lng: 14.2688662},
             destination: {lat: 49.6010519, lng: 14.1875919}
         },
         {
+            id: 4,
             origin: {lat: 50.0831588, lng: 14.435583},
             destination: {lat: 50.2701679, lng: 14.3296028}
         },
         {
+            id: 5,
             origin: {lat: 50.0831588, lng: 14.435583},
             destination: {lat: 50.1282272, lng: 13.4471977}
         }
     ]
+;
+
+function refresh() {
+    for (i = 0; i < data.length; i++) {
+        var originGps = data[i].origin;
+        var destinationGps = data[i].destination;
+        var id = data[i].id;
+
+        createMarker(originGps);
+        createInvisibleEndMarker(destinationGps);
+
+        createResultRow(id, originGps, destinationGps);
+
+    }
 };
 
-function submit() {
+
+var directionsDisplay;
+var endMarker;
+var activeId;
+function drawPath(id) {
+    if (activeId && activeId == id) {
+        return;
+    };
+
+    activeId = id;
+console.log("drawing path for id: " + id);
+    var item;
+    for (i = 0; i < data.length; i++) {
+        if (data[i].id == id) {
+            item = data[i];
+            break;
+        }
+    }
+    var originGps = item.origin;
+    var destinationGps = item.destination;
+    var id = item.id;
+
+    if (endMarker) {
+        endMarker.setMap(null);
+    }
+
+    endMarker = createMarker(destinationGps);
+
+    var request = {
+        origin: originGps,
+        destination: destinationGps,
+        travelMode: google.maps.TravelMode.DRIVING
+    };
+
+    directionsDisplay.setMap(null);
+    directionsDisplay.setMap(map);
+    directionsService.route(request, function (response, status) {
+        if (status == google.maps.DirectionsStatus.OK) {
+            directionsDisplay.setDirections(response);
+        } else {
+            console.log("error directionsService");
+        }
+    });
+}
+
+function createResultRow(id, originGps, destinationGps) {
+    var service = new google.maps.DistanceMatrixService();
+    service.getDistanceMatrix({
+        origins: [originGps],
+        destinations: [destinationGps],
+        travelMode: google.maps.TravelMode.DRIVING,
+        unitSystem: google.maps.UnitSystem.METRIC,
+        avoidHighways: false,
+        avoidTolls: false
+    }, function (response, status) {
+        if (status == google.maps.DistanceMatrixStatus.OK && response.rows[0].elements[0].status != "ZERO_RESULTS") {
+            var distance = response.rows[0].elements[0].distance.text;
+            var duration = response.rows[0].elements[0].duration.text;
+            console.log("Distance: " + distance);
+            console.log("Duration:" + duration);
+
+            $('#result-list').append("<div id='request-item-" + id + "' class='requestItem' onclick='selectRequest(" + id + ")'><img src='img/search_icon.png' onmousemove='drawPath(" + id + ");'><span>" + distance + "</span>, <span>" + duration + "</span></div>");
+        }
+    });
+}
+
+function offer() {
+};
+
+function selectRequest(id) {
+    for (i = 0; i < data.length; i++) {
+        if (data[i].id == id) {
+            item = data[i];
+            $('#request-item-' + id).css('background-color', 'lightblue');
+        } else {
+            $('#request-item-' + data[i].id).css('background-color', '');
+        }
+    }
+}
+
+function createInvisibleEndMarker(position) {
+    var marker = new google.maps.Marker({
+      map: map,
+      anchorPoint: new google.maps.Point(0, -29)
+    });
+    marker.setPosition(position);
+    marker.setVisible(false);
+
+    var current_bounds = map.getBounds();
+      var marker_pos = marker.getPosition();
+
+      if( !current_bounds.contains( marker_pos ) ){
+        var new_bounds = current_bounds.extend( marker_pos );
+        map.fitBounds( new_bounds );
+      }
+};
+
+function createMarker(position) {
+    var marker = new google.maps.Marker({
+      map: map,
+      anchorPoint: new google.maps.Point(0, -29)
+    });
+    marker.setPosition(position);
+    marker.setVisible(true);
+
+    var current_bounds = map.getBounds();
+      var marker_pos = marker.getPosition();
+
+      if( !current_bounds.contains( marker_pos ) ){
+        var new_bounds = current_bounds.extend( marker_pos );
+        map.fitBounds( new_bounds );
+      }
+    return marker;
 };
 
 $('.datepicker').datetimepicker({
@@ -133,7 +275,7 @@ $.postJSON = function(url, data, callback) {
       // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
 
       function initMap() {
-        var map = new google.maps.Map(document.getElementById('map'), {
+        map = new google.maps.Map(document.getElementById('map'), {
           center: {lat: 50.0755, lng: 14.4378},
           zoom: 10
         });
@@ -147,13 +289,12 @@ $.postJSON = function(url, data, callback) {
             console.log(latLng);
         });
 
-        var directionsService = new google.maps.DirectionsService();
-        var directionsDisplay = new google.maps.DirectionsRenderer({ 'draggable': true });
+        directionsService = new google.maps.DirectionsService();
+        directionsDisplay = new google.maps.DirectionsRenderer({ 'draggable': false, 'preserveViewport': true});
         directionsDisplay.setMap(map);
 
-
-      }
-    </script>
+      };
+</script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBERgplsRjMcAkFoTcFVeq5Q7--TKxLVPA&libraries=places&callback=initMap"
         async defer></script>
 </body>
