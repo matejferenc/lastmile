@@ -192,13 +192,13 @@
 
     function acceptOffer(offerId) {
         $.postJSON("http://localhost:8086/rest/traveller/accept/" + offerId, function (data, status) {
-            window.location.href = "./view-request.html#" + (request.requestId);
+            window.location.reload();
         });
     };
 
     function declineOffer(offerId) {
         $.postJSON("http://localhost:8086/rest/traveller/decline/" + offerId, function (data, status) {
-            window.location.href = "./view-request.html#" + (request.requestId);
+            window.location.reload();
         });
     };
 
@@ -207,7 +207,8 @@
             return;
         }
         $.deleteJSON("http://localhost:8086/rest/traveller/" + request.requestId, function (data, status) {
-            window.location.href = "./view-request.html#" + (request.requestId);
+//            window.location.href = "./view-request.html#" + (request.requestId);
+            window.location.reload();
         });
     };
 

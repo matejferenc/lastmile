@@ -10,10 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -76,6 +73,7 @@ public class MatchService {
                 request.setMatchedOfferId(accept.getOfferId());
             }
             Set<String> offers = offersForPendingRequests.getOrDefault(accept.getRequestId(), Sets.newHashSet());
+            offers.remove(offer.getOfferId());
             if (offers != null) {
                 offers.forEach(oid -> decline(oid, "RequestCanceled"));
             }
@@ -129,5 +127,9 @@ public class MatchService {
 
     public TransferOffer getOffer(String offerId) {
         return offers.get(offerId);
+    }
+
+    public Collection<TransferRequest> getPendingRequests() {
+        return requests.values().stream().filter(r -> r.getState() == TransferRequestState.NEW).collect(Collectors.toSet());
     }
 }

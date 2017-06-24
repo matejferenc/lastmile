@@ -1,7 +1,6 @@
 package com.lastmile;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.lastmiles.PlaceSearchRequest;
 import com.lastmiles.TransferRequest;
 import org.slf4j.Logger;
@@ -10,8 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * Created by trehak on 24.6.17.
@@ -20,24 +17,16 @@ import java.util.function.Consumer;
 public class SearchService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(SearchService.class);
-    private final Map<String, TransferRequest> requests = Maps.newConcurrentMap();
-    private final KafkaEventsService kafkaEventsService;
+    private final MatchService matchService;
 
     @Autowired
-    public SearchService(KafkaEventsService kafkaEventsService) throws Exception {
-        this.kafkaEventsService = kafkaEventsService;
-        kafkaEventsService.listen(TransferRequest.class, new Consumer<TransferRequest>() {
-            @Override
-            public void accept(TransferRequest transferRequest) {
-                LOGGER.info("Received {} ", transferRequest);
-                requests.put(transferRequest.getRequestId(), transferRequest);
-            }
-        });
+    public SearchService(MatchService matchService, KafkaEventsService kafkaEventsService) throws Exception {
+        this.matchService = matchService;
     }
 
     public List<TransferRequest> search(PlaceSearchRequest request) {
         List<TransferRequest> matched = Lists.newArrayList();
-        for (TransferRequest r : requests.values()) {
+        for (TransferRequest r : matchService.getPendingRequests()) {
             if (matchesSearch(request, r)) {
                 matched.add(r);
             }

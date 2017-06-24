@@ -2,6 +2,8 @@ package com.lastmile;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import cz.atlascon.travny.data.BinaryWriter;
 import cz.atlascon.travny.records.CustomRecord;
@@ -20,6 +22,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -33,6 +36,7 @@ public class KafkaEventsService implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaEventsService.class);
     private final String kafkaBootstrapServers;
     private final Map<String, KafkaTopic> konsumers = Maps.newConcurrentMap();
+    private final ConcurrentMap<String, Set<KafkaTopic>> topicListeners = Maps.newConcurrentMap();
     private final ExecutorService pollers = Executors.newCachedThreadPool();
     private final ScheduledExecutorService mainLoop = Executors.newScheduledThreadPool(1);
     private final KafkaProducer<byte[], byte[]> producer;
@@ -63,22 +67,22 @@ public class KafkaEventsService implements AutoCloseable {
     }
 
     public void wait(Future<RecordMetadata> metadataFuture) throws Exception {
-//        RecordMetadata unchecked = Futures.getUnchecked(metadataFuture);
-//        String topic = unchecked.topic();
-//        int partition = unchecked.partition();
-//        long offset = unchecked.offset();
-//        Class<?> aClass = Class.forName(topic);
-//        KafkaTopic kt = topics.get(aClass);
-//        KafkaTopicPartition ktp = kt.getTopicPartition(partition);
-//        while (ktp.offset() < offset) {
-//            Thread.sleep(25);
-//        }
-        // TODO
-        Thread.sleep(1500);
+        RecordMetadata unchecked = Futures.getUnchecked(metadataFuture);
+        String topic = unchecked.topic();
+        int partition = unchecked.partition();
+        long offset = unchecked.offset();
+        Set<KafkaTopic> kts = topicListeners.get(topic);
+        for (KafkaTopic kt : kts) {
+            KafkaTopicPartition ktp = kt.getTopicPartition(partition);
+            while (ktp.offset() < offset) {
+                Thread.sleep(5);
+            }
+        }
     }
 
     public <E extends CustomRecord> void listen(Class<E> cls, Consumer<E> consumer) throws Exception {
         final KafkaTopic<E> kafkaConsumer = createConsumer(cls);
+        topicListeners.computeIfAbsent(cls.getCanonicalName(), n -> Sets.newHashSet()).add(kafkaConsumer);
         replayAll(cls, consumer, kafkaConsumer);
         pollers.submit(new Callable<Void>() {
             @Override
@@ -105,7 +109,6 @@ public class KafkaEventsService implements AutoCloseable {
                 l.forEach(m -> consumer.accept(m));
             }
         }
-        topic.close();
     }
 
     private <E extends CustomRecord> List<E> poll(Class<E> cls, KafkaTopic<E> topic) {
