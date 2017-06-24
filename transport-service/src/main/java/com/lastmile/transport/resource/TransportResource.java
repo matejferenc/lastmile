@@ -1,5 +1,6 @@
-package com.lastmile;
+package com.lastmile.transport.resource;
 
+import com.lastmile.transport.service.TransportService;
 import com.lastmiles.TransferRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -9,7 +10,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
 import java.util.List;
 
 /**

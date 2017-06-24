@@ -1,5 +1,6 @@
-package com.lastmile;
+package com.lastmile.transport.service;
 
+import com.lastmile.KafkaEventsService;
 import com.lastmiles.TransferRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,11 +27,11 @@ public class TransportService {
                 requestsStorageMap.put(transferRequest.getRequestId(), transferRequest));
     }
 
-    List<TransferRequest> getAllRequests() {
+    public List<TransferRequest> getAllRequests() {
         return new ArrayList<>(requestsStorageMap.values());
     }
 
-    TransferRequest getRequest(String id) {
+    public TransferRequest getRequest(String id) {
         return requestsStorageMap.get(id);
     }
 }
