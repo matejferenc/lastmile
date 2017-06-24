@@ -111,15 +111,20 @@ public class MatchService {
 
     public List<TransferOffer> getOffers(String requestId) {
         TransferRequest request = requests.get(requestId);
-        if (request == null || request.getState() != TransferRequestState.NEW) {
+        if (request == null || request.getState() == TransferRequestState.CANCELLED) {
             return Lists.newArrayList();
         }
 
-        return offersForPendingRequests.getOrDefault(requestId, Sets.newHashSet()).stream()
-                .map(offers::get)
-                .filter(Objects::nonNull)
-                .filter(transferOffer -> transferOffer.getState() == TransferOfferState.NEW || transferOffer.getState() == TransferOfferState.ACCEPTED)
-                .collect(Collectors.toList());
+        if (request.getState() == TransferRequestState.MATCHED) {
+            TransferOffer offer = getOffer(request.getMatchedOfferId());
+            return Lists.newArrayList(offer);
+        } else {
+            return offersForPendingRequests.getOrDefault(requestId, Sets.newHashSet()).stream()
+                    .map(offers::get)
+                    .filter(Objects::nonNull)
+                    .filter(transferOffer -> transferOffer.getState() == TransferOfferState.NEW || transferOffer.getState() == TransferOfferState.ACCEPTED)
+                    .collect(Collectors.toList());
+        }
     }
 
 

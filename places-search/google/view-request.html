@@ -94,14 +94,16 @@
         <input readonly="readonly" id="phone" type="text" class="form-control">
         <br/>
         <input readonly="readonly" id="cancelButton" onclick="cancel(); return false;" type="submit"
-               value="Cancel request" class="btn btn-primary">
+               value="Cancel request" class="btn btn-warning">
         <br/>
         <h2 id="distance"></h2>
         <h2 id="duration"></h2>
     </form>
 </div>
 <div id="map"></div>
-<h2>Offers:</h2>
+<div id="offers-caption">
+    <h2>Offers:</h2>
+</div>
 <div id="offers"></div>
 <div id="infowindow-content">
     <img src="" width="16" height="16" id="place-icon">
@@ -128,6 +130,11 @@
             $("#ride-state").val(data.state);
             $("#phone").val(data.phoneNumber);
 
+            if (data.state == "MATCHED") {
+                $("#offers-caption").html("<h2>Selected ride:</h2>")
+            } else if (data.state() == "CANCELLED") {
+                $("#offers-caption").html("<h2>Request is cancelled</h2>")
+            }
 
             var requestData = {
                 origin: {"lat": data.placeFrom.lat, "lng": data.placeFrom.lon},
@@ -151,7 +158,7 @@
                 offersDiv += "<tr><td>Email</td><td>" + data[i].email + "</td>";
                 offersDiv += "</table>";
                 offersDiv += "<input class='btn btn-warning' onclick=\"declineOffer(\'" + data[i].offerId + "\'); return false;\" type=\"submit\" value =\"Decline offer\">";
-                offersDiv += "<input class='btn btn-success' onclick=\"acceptOffer(\'"+data[i].offerId+"\'); return false;\" type=\"submit\" value =\"Accept offer\">";
+                offersDiv += "<input class='btn btn-success' onclick=\"acceptOffer(\'" + data[i].offerId + "\'); return false;\" type=\"submit\" value =\"Accept offer\">";
                 offersDiv += "</div>";
             }
             $("#offers").html(offersDiv);
@@ -181,13 +188,13 @@
     };
 
     function acceptOffer(offerId) {
-        $.postJSON("http://localhost:8086/rest/accept/" + offerId, null, function (data, status) {
+        $.postJSON("http://localhost:8086/rest/traveller/accept/" + offerId, function (data, status) {
             window.location.href = "./view-request.html#" + (request.requestId);
         });
     };
 
     function declineOffer(offerId) {
-        $.postJSON("http://localhost:8086/rest/traveller/cancel/" + offerId, null, function (data, status) {
+        $.postJSON("http://localhost:8086/rest/traveller/decline/" + offerId, function (data, status) {
             window.location.href = "./view-request.html#" + (request.requestId);
         });
     };
@@ -201,6 +208,17 @@
         });
     };
 
+    $.postJSON = function (url, callback) {
+        return $.ajax({
+            'type': 'POST',
+            'url': url,
+            'dataType': 'json',
+            'success': callback,
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+    };
 
     $.postJSON = function (url, data, callback) {
         return $.ajax({
