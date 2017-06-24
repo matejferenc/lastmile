@@ -69,7 +69,7 @@
 <script src="js/bootstrap.js"></script>
 <div id="user-input-panel">
     <form class="form-group">
-    <h2>Create an offer</h2>
+    <h2>Offer a ride</h2>
     <input id="refreshButton" onclick="refreshFromServer(); return false;" type="submit" value="Refresh map" class="btn btn-primary">
     <br/>
     <br/>
@@ -246,7 +246,7 @@ function offer() {
     };
     $.putJSON("http://localhost:8085/rest/transport/offer", data, function(data, status){
         console.log(data);
-        $('#offerCreated').text("Offer " + data.offerId + " created.");
+        window.location.href = "./view-offer.html#" + (data.offerId);
     });
 };
 

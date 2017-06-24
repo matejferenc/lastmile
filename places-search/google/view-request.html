@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View request</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+        /* Always set the map height explicitly to define the size of the div
+         * element that contains the map. */
+        #map {
+            height: 50%;
+        }
+
+        #offers {
+            height: 50%;
+            padding-top: 2%;
+        }
+
+        /* Optional: Makes the sample page fill the window. */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #description {
+            font-family: Roboto;
+            font-size: 15px;
+            font-weight: 300;
+        }
+
+        #infowindow-content .title {
+            font-weight: bold;
+        }
+
+        #infowindow-content {
+            display: none;
+        }
+
+        #map #infowindow-content {
+            display: inline;
+        }
+
+        #title {
+            color: #fff;
+            background-color: #4d90fe;
+            font-size: 25px;
+            font-weight: 500;
+            padding: 6px 12px;
+        }
+
+        #user-input-panel {
+            width: 30%;
+            float: left;
+        }
+
+        #distance {
+
+        }
+
+        form {
+            padding: 20px;
+        }
+    </style>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-datetimepicker.min.css">
+
+</head>
+<body>
+<script src="js/jquery-3.2.1.min.js"></script>
+<script src="js/bootstrap-datetimepicker.min.js"></script>
+<script src="js/bootstrap.js"></script>
+<div id="user-input-panel">
+    <form class="form-group">
+        <h2>Ride request details</h2>
+        <br/>
+        <label for="ride-state">Status</label>
+        <input readonly="readonly" id="ride-state" type="text" placeholder="Status" class="form-control">
+        <label for="origin">Ride ID</label>
+        <input readonly="readonly" id="rideId" type="text" placeholder="Ride ID" class="form-control">
+        <label for="origin">Starting point:</label>
+        <input readonly="readonly" id="origin" type="text" placeholder="From" class="form-control">
+        <br/>
+        <label for="destination">Destination:</label>
+        <input readonly="readonly" id="destination" type="text" placeholder="Destination" class="form-control">
+        <br/>
+        <label for="start-date">Date:</label>
+        <input readonly="readonly" id="start-date" class="datepicker form-control" data-date-format="mm/dd/yyyy">
+        <br/>
+        <label for="people-count">Number of passengers:</label>
+        <input readonly="readonly" id="people-count" type="number" class="form-control">
+        <br/>
+        <label for="phone">Telephone number:</label>
+        <input readonly="readonly" id="phone" type="text" class="form-control">
+        <br/>
+        <input readonly="readonly" id="cancelButton" onclick="cancel(); return false;" type="submit"
+               value="Cancel request" class="btn btn-primary">
+        <br/>
+        <h2 id="distance"></h2>
+        <h2 id="duration"></h2>
+    </form>
+</div>
+<div id="map"></div>
+<div id="offers"></div>
+<div id="infowindow-content">
+    <img src="" width="16" height="16" id="place-icon">
+    <span id="place-name" class="title"></span><br>
+    <span id="place-address"></span>
+</div>
+
+<script>
+
+    var request;
+    var directionsService;
+    var directionsDisplay;
+
+    $(document).ready(function () {
+        var hash = window.location.hash;
+        var requestId = hash.substr(1, hash.length);
+        $.getJSON("http://localhost:8086/rest/traveller/" + requestId, function (data, status) {
+            request = data;
+            $("#rideId").val(data.requestId);
+            $("#origin").val(data.placeFrom.lat + ", " + data.placeFrom.lon);
+            $("#destination").val(data.placeTo.lat + ", " + data.placeTo.lon);
+            $("#people-count").val(data.peopleCount);
+            $("#start-date").val(new Date(data.requesteTime * 1000));
+            $("#ride-state").val(data.state);
+            $("#phone").val(data.phoneNumber);
+
+
+            var requestData = {
+                origin: {"lat" : data.placeFrom.lat, "lng" : data.placeFrom.lon},
+                destination: {"lat" : data.placeTo.lat, "lng" : data.placeTo.lon},
+                travelMode: google.maps.TravelMode.DRIVING
+            };
+            directionsService.route(requestData, function (response, status) {
+                if (status == google.maps.DirectionsStatus.OK) {
+                    directionsDisplay.setDirections(response);
+                }
+            });
+
+        });
+        $.getJSON("http://localhost:8086/rest/traveller/offers/" + requestId, function (data, status) {
+            var offersDiv = "";
+            for (var i = 0; i < data.length; i++) {
+                offersDiv += "<div class=\"offer\">";
+                offersDiv += data[i];
+                offersDiv += "</div>";
+            }
+            $("#offers").innerHTML = offersDiv;
+        });
+    });
+
+    $.getJSON = function (url, callback) {
+        return $.ajax({
+            'type': 'GET',
+            'url': url,
+            'success': callback,
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+    };
+
+    $.deleteJSON = function (url, callback) {
+        return $.ajax({
+            'type': 'DELETE',
+            'url': url,
+            'success': callback,
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+    };
+
+    function cancel() {
+        if (request.state == "CANCELLED") {
+            return;
+        }
+        $.deleteJSON("http://localhost:8086/rest/traveller/" + request.requestId, function (data, status) {
+            window.location.href = "./view-request.html#" + (request.requestId);
+        });
+    };
+
+
+    $.postJSON = function (url, data, callback) {
+        return $.ajax({
+            'type': 'POST',
+            'url': url,
+            'contentType': 'application/json',
+            'data': JSON.stringify(data),
+            'dataType': 'json',
+            'success': callback,
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+    };
+
+    $.putJSON = function (url, data, callback) {
+        return $.ajax({
+            'type': 'PUT',
+            'url': url,
+            'contentType': 'application/json',
+            'data': JSON.stringify(data),
+            'dataType': 'json',
+            'success': callback,
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+    };
+
+
+    // This example requires the Places library. Include the libraries=places
+    // parameter when you first load the API. For example:
+    // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+
+    function initMap() {
+        var map = new google.maps.Map(document.getElementById('map'), {
+            center: {lat: 50.0755, lng: 14.4378},
+            zoom: 10
+        });
+        var types = document.getElementById('type-selector');
+        var strictBounds = document.getElementById('strict-bounds-selector');
+
+        directionsService = new google.maps.DirectionsService();
+        directionsDisplay = new google.maps.DirectionsRenderer({'draggable': false});
+        directionsDisplay.setMap(map);
+
+        var origin = document.getElementById('origin');
+        var autocomplete = new google.maps.places.Autocomplete(origin);
+        // Bind the map's bounds (viewport) property to the autocomplete object,
+        // so that the autocomplete requests use the current map bounds for the
+        // bounds option in the request.
+        autocomplete.bindTo('bounds', map);
+
+        var infowindow = new google.maps.InfoWindow();
+        var infowindowContent = document.getElementById('infowindow-content');
+        infowindow.setContent(infowindowContent);
+        var marker = new google.maps.Marker({
+            map: map,
+            anchorPoint: new google.maps.Point(0, -29)
+        });
+
+
+
+    }
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBERgplsRjMcAkFoTcFVeq5Q7--TKxLVPA&libraries=places&callback=initMap"
+        async defer></script>
+</body>
+</html>

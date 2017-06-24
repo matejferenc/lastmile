@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Place Autocomplete</title>
+    <title>Request a ride</title>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
     <style>
@@ -62,7 +62,7 @@
 <script src="js/bootstrap.js"></script>
 <div id="user-input-panel">
     <form class="form-group">
-    <h2>Create a request</h2>
+    <h2>Request ride</h2>
     <br/>
     <label for="origin">Starting point:</label>
     <input id="origin" type="text" placeholder="Enter a location" class="form-control">
@@ -70,7 +70,7 @@
     <label for="destination">Destination:</label>
     <input id="destination" type="text" placeholder="Enter a destination" class="form-control">
     <br/>
-    <label for="start-date">Date:</label>
+    <label for="start-date">Date and time:</label>
     <input id="start-date" class="datepicker form-control" data-date-format="mm/dd/yyyy">
     <br/>
     <label for="people-count">Number of passengers:</label>
@@ -116,7 +116,9 @@ function request() {
         peopleCount: parseInt(peopleCount),
         phoneNumber: phone
     };
-    $.putJSON("http://localhost:8086/rest/traveller/request", data, function(data, status){});
+    $.putJSON("http://localhost:8086/rest/traveller/request", data, function(data, status){
+        window.location.href = "./view-request.html#"+(data.requestId);
+    });
 };
 
 $('.datepicker').datetimepicker({

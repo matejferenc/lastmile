@@ -40,7 +40,7 @@ public class TransportResource {
     @PUT
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @Consumes({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-    public TransferOffer postOffer(TransferOffer transferOffer) throws IOException {
+    public TransferOffer postOffer(TransferOffer transferOffer) throws Exception {
         transferOffer.setState(TransferOfferState.NEW);
         return transportService.postOffer(transferOffer);
     }

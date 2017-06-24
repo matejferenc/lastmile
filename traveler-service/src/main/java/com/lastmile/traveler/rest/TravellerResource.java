@@ -3,6 +3,7 @@ package com.lastmile.traveler.rest;
 import com.lastmile.KafkaEventsService;
 import com.lastmile.MatchService;
 import com.lastmiles.*;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.ws.rs.*;
@@ -10,6 +11,7 @@ import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Future;
 
 /**
  * Created by trehak on 24.6.17.
@@ -31,10 +33,11 @@ public class TravellerResource {
     @PUT
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @Consumes({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-    public TransferRequest newRequest(TransferRequest request) throws IOException {
+    public TransferRequest newRequest(TransferRequest request) throws Exception {
         request.setState(TransferRequestState.NEW);
         request.setRequestId(UUID.randomUUID().toString());
-        kafkaEventsService.produce(request);
+        Future<RecordMetadata> produce = kafkaEventsService.produce(request);
+        kafkaEventsService.wait(produce);
         return request;
     }
 
@@ -48,8 +51,9 @@ public class TravellerResource {
 
     @Path("/{requestId}")
     @DELETE
-    public void deleteRequest(@PathParam("requestId") String requestId) throws IOException {
-        kafkaEventsService.produce(new TransferRequestCancel().setRequestId(requestId));
+    public void deleteRequest(@PathParam("requestId") String requestId) throws Exception {
+        Future<RecordMetadata> future = kafkaEventsService.produce(new TransferRequestCancel().setRequestId(requestId));
+        kafkaEventsService.wait(future);
     }
 
     @Path("/offers/{requestId}")
