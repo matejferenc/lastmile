@@ -90,6 +90,8 @@
     <label for="people-count">Number of passengers:</label>
     <input id="people-count" type="number" class="form-control" disabled>
     <br/>
+    <input readonly="readonly" id="cancelButton" onclick="cancel(); return false;" type="submit"
+           value="Cancel offer" class="btn btn-primary">
     </form>
 </div>
 <div id="map"></div>
@@ -98,10 +100,22 @@
 var map;
 var directionsDisplay;
 var directionsService;
+var offer;
+
+function cancel() {
+    if (offer.state == "CANCELLED") {
+        return;
+    }
+    $.deleteJSON("http://localhost:8085/rest/transport/offer/" + offer.offerId, function (data, status) {
+        <!--window.location.href = "./view-offer.html#" + (offer.offerId);-->
+        window.location.reload();
+    });
+};
 
 function loadOffer(){
     var offerId = window.location.hash.substr(1);
     $.getJSON("http://localhost:8085/rest/transport/offer/" + offerId, {}, function(data, status) {
+        offer = data;
         console.log(data);
         $('#price').val(data.price);
         $('#state').val(data.state);
@@ -202,6 +216,17 @@ $.getJSON = function(url, requestData, callback) {
         'url': url,
         'contentType': 'application/json',
         'data': requestData,
+        'success': callback,
+        headers: {
+            'Accept': 'application/json'
+        }
+    });
+};
+
+$.deleteJSON = function (url, callback) {
+    return $.ajax({
+        'type': 'DELETE',
+        'url': url,
         'success': callback,
         headers: {
             'Accept': 'application/json'
