@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.inject.Singleton;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 
 /**
  * Created by ondrej on 24.6.17.
@@ -39,9 +40,17 @@ public class TransportResource {
     @PUT
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     @Consumes({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-    public TransferOffer postOffer(TransferOffer transferOffer) {
+    public TransferOffer postOffer(TransferOffer transferOffer) throws IOException {
         transferOffer.setState(TransferOfferState.NEW);
         return transportService.postOffer(transferOffer);
+    }
+
+    @Path("/offer/{offerId}")
+    @DELETE
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    @Consumes({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    public TransferOffer cancelOffer(@PathParam("offerId") String offerId) throws IOException {
+        return transportService.cancelOffer(offerId);
     }
 
     @Path("/offer/{offerId}")
