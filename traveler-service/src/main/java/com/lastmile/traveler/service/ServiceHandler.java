@@ -8,6 +8,7 @@ package com.lastmile.traveler.service;
 import com.lastmile.KafkaEventsService;
 import com.lastmiles.TransferOffer;
 import com.lastmiles.TransferRequest;
+import com.lastmiles.traveler.ApiController;
 import com.lastmiles.traveler.utils.UuidGen;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -25,46 +26,30 @@ import org.springframework.stereotype.Service;
  * @author David
  */
 @Service
-public class ServiceHandler {
-    
+public class ServiceHandler {    
             
-    @Autowired
-    public KafkaEventsService kafkaEventsService;
-    
-    ConcurrentMap<String,TransferRequest> cmr = new ConcurrentHashMap();   
-    ConcurrentMap<String,TransferOffer> cmo = new ConcurrentHashMap();
-    
-    TransferRequest transferRequest;
-    
+    private final KafkaEventsService kafkaEventsService;
         
+    private static ConcurrentMap<String,TransferRequest> transferRequestMap = new ConcurrentHashMap();   
+    private static ConcurrentMap<String,TransferOffer> transferOfferMap = new ConcurrentHashMap();   
+    
     private TransferOffer to;
     private TransferRequest tr;
     
-    public void checkForOffers() {       
-        kafkaEventsService.listen(TransferRequest.class, transferRequest ->
-                System.out.println(transferRequest.getRequestId()));        
-    }
+    @Autowired
+    public ServiceHandler(KafkaEventsService kafkaEventsService) { 
+        this.kafkaEventsService = kafkaEventsService;
+        kafkaEventsService.listen(TransferOffer.class, transferOffer ->
+                addOffer(transferOffer));
+    }        
     
-    public TransferOffer getOfferById(String id) {       
-        to = new TransferOffer();
-        return to;
-    }
+    @Autowired
+    private ApiController apiController;
     
-    public TransferRequest getRequestById(String id) {       
-        tr = new TransferRequest();
-        return tr;
-    }
-    
-    public List<TransferOffer> getListOffer() {
-        List<TransferOffer> list= new ArrayList();
-        return list;
-    }
     
     public TransferRequest processRequest(TransferRequest tr) {
-        this.tr=tr;
         tr.setRequestId(UuidGen.generateUUID());
-        addToMapRequest(tr.getRequestId(),tr);
-        
+        addToMapRequest(tr.getRequestId(),tr);        
         try {
             kafkaEventsService.produce(tr);
             return tr;
@@ -75,13 +60,13 @@ public class ServiceHandler {
         
     }    
     public void addOffer(TransferOffer to) {
-        addToMapOffer(to.getOfferId(), to);        
+        addToMapOffer(to.getOfferId(), to);
+        apiController.postOffer(to);                
     }
     
     private TransferRequest assignRequest(TransferOffer to) {
-            this.cmo = cmo;
             
-            for (Map.Entry<String, TransferRequest> entry : cmr.entrySet())
+            for (Map.Entry<String, TransferRequest> entry : transferRequestMap.entrySet())
             {
                 if (entry.getKey().equals(to.getOfferId())) {
                 return entry.getValue();
@@ -90,15 +75,47 @@ public class ServiceHandler {
         return null;
     }
     
+    public List<TransferOffer> getListOffer() {
+        return convertToList(transferOfferMap);
+    }
+            
+            
+    private <T> List<T> convertToList(ConcurrentMap<String,T> map) {
+        List<T> list = new ArrayList<>(map.values());
+        return list;
+    }
+    
+    // Get By ID
+    private <T> T getByIdFromMap(ConcurrentMap<String,T> map, String key) {
+        for (Map.Entry<String, T> entry : map.entrySet())
+            {
+                if (entry.getKey().equals(key)) {
+                    return entry.getValue();
+                    }
+            }
+        return null;       
+    }    
+    
+    public TransferOffer getOfferById(String id) {       
+        to = getByIdFromMap(transferOfferMap, id);        
+        return to;
+    }
+    
+    public TransferRequest getRequestById(String id) {       
+        tr = getByIdFromMap(transferRequestMap, id);
+        return tr;
+    }
+    
+    // Add to map
     private void addToMapRequest(String s,TransferRequest tr) {       
-            this.cmr = cmr;
-            if(!cmr.containsKey(s))
-                cmr.put(s,tr);
+            
+            if(!transferRequestMap.containsKey(s))
+                transferRequestMap.put(s,tr);
              }
     
-    private void addToMapOffer(String s,TransferOffer to) {       
-            this.cmo = cmo;
-            if(!cmo.containsKey(s))
-                cmo.put(s,to);
-             }
+    private void addToMapOffer(String s,TransferOffer to) {    
+            if(!transferOfferMap.containsKey(s)) {
+                transferOfferMap.put(s,to);
+            }
+    }
 }

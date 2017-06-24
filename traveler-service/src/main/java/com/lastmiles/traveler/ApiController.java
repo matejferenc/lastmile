@@ -9,54 +9,61 @@ import com.lastmile.traveler.service.ServiceHandler;
 import com.lastmiles.TransferOffer;
 import com.lastmiles.TransferRequest;
 import java.util.List;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  *
  * @author David
  */
-@RestController
+
+@Path("/requests")
+
+
 public class ApiController {
     
     @Autowired
     public ServiceHandler travelerService;
     
-    @Produces("application/json")    
-    @RequestMapping(value= "/request", method = RequestMethod.GET)
+    @Path("/request")
+    @GET
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     public TransferRequest getAddressRequest(@RequestBody TransferRequest tr){ 
         return travelerService.processRequest(tr);        
 	}    
     
-    @Produces("application/json")
-    @RequestMapping(value= "/request/{id}", method = RequestMethod.GET)
+    @Path("/request/{id}")
+    @GET
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     public TransferRequest getAddressRequest(@PathParam("id") String id){ 
         return travelerService.getRequestById(id);          
 	}  
     
-    @Produces("application/json")
-    @RequestMapping(value= "/offer", method = RequestMethod.GET)
+    @Path("/offer")
+    @GET
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     public List<TransferOffer> getOffer(){         
         return travelerService.getListOffer();    
 	}    
     
-    @Produces("application/json")
-    @RequestMapping(value= "/offer/{id}", method = RequestMethod.GET)
+    @Path("/offer/{id}")
+    @GET
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
     public TransferOffer getOfferById(@PathParam("id") String id){ 
         return travelerService.getOfferById(id);
 	}  
 
-    @Produces("application/json")
-    @RequestMapping(value= "/offer/new", method = RequestMethod.POST)
-    public void getOfferById(@RequestBody TransferOffer to){ 
+    @Path("/offer/new")
+    @POST
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    public void postOffer(@RequestBody TransferOffer to){ 
         
 	}  
 }
