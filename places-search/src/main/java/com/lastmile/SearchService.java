@@ -54,8 +54,8 @@ public class SearchService {
     private boolean match(PlaceSearchRequest request, Place from) {
         double lat = from.getLat().doubleValue();
         double lon = from.getLon().doubleValue();
-        return request.getLatNorth() <= lat && request.getLatSouth() >= lat &&
-                request.getLonEast() <= lon && request.getLonWest() >= lon;
+        return request.getLatNorth() >= lat && request.getLatSouth() <= lat &&
+                request.getLonEast() >= lon && request.getLonWest() <= lon;
     }
 
 
