@@ -1,4 +1,4 @@
-package com.lastmiles;
+package com.lastmile;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

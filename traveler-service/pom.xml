@@ -58,6 +58,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jersey</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>jersey-media-json-jackson</artifactId>
+                    <groupId>org.glassfish.jersey.media</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

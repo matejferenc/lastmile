@@ -1,4 +1,4 @@
-package com.lastmiles;
+package com.lastmile;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;

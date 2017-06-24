@@ -1,4 +1,4 @@
-package com.lastmiles;
+package com.lastmile;
 
 /**
  * Created by trehak on 23.6.17.
