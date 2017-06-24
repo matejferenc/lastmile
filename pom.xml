@@ -16,6 +16,7 @@
         <module>api</module>
         <module>traveler-service</module>
         <module>transport-service</module>
+        <module>notification-service</module>
     </modules>
 
     <properties>
@@ -128,6 +129,12 @@
             <dependency>
                 <groupId>lastmile.com</groupId>
                 <artifactId>traveler-service</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+
+            <dependency>
+                <groupId>lastmile.com</groupId>
+                <artifactId>notification-service</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
 
