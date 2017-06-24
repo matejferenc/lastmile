@@ -13,7 +13,9 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Created by trehak on 24.6.17.
@@ -46,9 +48,8 @@ public class MatchService {
         // new offer
         kafkaEventsService.listen(TransferOffer.class, transferOffer -> {
             offers.put(transferOffer.getOfferId(), transferOffer);
-            offersForPendingRequests.computeIfAbsent(transferOffer.getRequestId(), s -> {
-                return Sets.newConcurrentHashSet();
-            }).add(transferOffer.getOfferId());
+            offersForPendingRequests.computeIfAbsent(transferOffer.getRequestId(), s ->
+                    Sets.newConcurrentHashSet()).add(transferOffer.getOfferId());
         });
         // take offer down
         kafkaEventsService.listen(TransferOfferCancel.class, cancel -> {
@@ -113,19 +114,11 @@ public class MatchService {
         if (request == null || request.getState() != TransferRequestState.NEW) {
             return Lists.newArrayList();
         }
-        List<TransferOffer> list = Lists.newArrayList();
-        if (request != null) {
-            Set<String> offerIds = offersForPendingRequests.get(requestId);
-            for (String offerId : offerIds) {
-                TransferOffer transferOffer = offers.get(offerId);
-                if (transferOffer != null) {
-                    if (transferOffer.getState() == TransferOfferState.NEW) {
-                        list.add(transferOffer);
-                    }
-                }
-            }
-        }
-        return list;
+        return offersForPendingRequests.get(requestId).stream()
+                .map(offers::get)
+                .filter(Objects::nonNull)
+                .filter(transferOffer -> transferOffer.getState() == TransferOfferState.NEW)
+                .collect(Collectors.toList());
     }
 
 

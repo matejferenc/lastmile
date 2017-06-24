@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.lastmile.traveler.utils;
+package com.lastmile.traveller.utils;
     import java.util.UUID;
 /**
  *
