@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.lastmiles.traveler;
+package com.lastmile.traveler;
 
 import com.lastmile.traveler.service.ServiceHandler;
 import com.lastmiles.TransferOffer;
@@ -25,8 +25,6 @@ import org.springframework.web.bind.annotation.RequestBody;
  */
 
 @Path("/requests")
-
-
 public class ApiController {
     
     @Autowired
