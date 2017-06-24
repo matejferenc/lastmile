@@ -33,7 +33,7 @@ public class KafkaEventsService implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaEventsService.class);
     private final String kafkaBootstrapServers;
     private final Map<String, KafkaTopic> konsumers = Maps.newConcurrentMap();
-    private final ExecutorService pollers = Executors.newFixedThreadPool(4);
+    private final ExecutorService pollers = Executors.newCachedThreadPool();
     private final ScheduledExecutorService mainLoop = Executors.newScheduledThreadPool(1);
     private final ConcurrentMap<Class, KafkaTopic> topics = Maps.newConcurrentMap();
     private final KafkaProducer<byte[], byte[]> producer;
