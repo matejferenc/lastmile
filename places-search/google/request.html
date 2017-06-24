@@ -186,6 +186,7 @@ $.putJSON = function(url, data, callback) {
 
 
 //destination autocomplete
+        var destination = document.getElementById('destination');
         var destinationAutocomplete = new google.maps.places.Autocomplete(destination);
         destinationAutocomplete.bindTo('bounds', map);
         var destinationMarker = new google.maps.Marker({
@@ -268,8 +269,8 @@ $.putJSON = function(url, data, callback) {
         });
 
 
+        var origin = document.getElementById('origin');
         var autocomplete = new google.maps.places.Autocomplete(origin);
-
         // Bind the map's bounds (viewport) property to the autocomplete object,
         // so that the autocomplete requests use the current map bounds for the
         // bounds option in the request.
