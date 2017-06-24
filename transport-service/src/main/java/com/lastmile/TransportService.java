@@ -1,14 +1,36 @@
 package com.lastmile;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.web.support.SpringBootServletInitializer;
+import com.lastmiles.TransferRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-@SpringBootApplication(scanBasePackages = {"com.lastmile"})
-public class TransportService extends SpringBootServletInitializer {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-    public static void main(String[] args) {
-        SpringApplication.run(TransportService.class, args);
+/**
+ * Created by ondrej on 24.6.17.
+ */
+@Service
+public class TransportService {
+
+    private static ConcurrentMap<String, TransferRequest> requestsStorageMap = new ConcurrentHashMap<>();
+
+    final private KafkaEventsService kafkaEventsService;
+
+    @Autowired
+    public TransportService(KafkaEventsService kafkaEventsService) {
+        this.kafkaEventsService = kafkaEventsService;
+        kafkaEventsService.listen(TransferRequest.class, transferRequest ->
+                requestsStorageMap.put(transferRequest.getRequestId(), transferRequest));
     }
 
+    List<TransferRequest> getAllRequests() {
+        return new ArrayList<>(requestsStorageMap.values());
+    }
+
+    TransferRequest getRequest(String id) {
+        return requestsStorageMap.get(id);
+    }
 }

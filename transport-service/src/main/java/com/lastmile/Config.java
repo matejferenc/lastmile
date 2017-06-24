@@ -20,6 +20,6 @@ public class Config extends ResourceConfig {
     public void registerEndpoints() {
         // jersey
         register(MultiPartFeature.class);
-
+        register(TransportResource.class);
     }
 }
