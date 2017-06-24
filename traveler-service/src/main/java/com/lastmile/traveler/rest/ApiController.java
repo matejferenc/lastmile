@@ -3,12 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.lastmile.traveler;
+package com.lastmile.traveler.rest;
 
-import com.lastmile.traveler.service.ServiceHandler;
+import com.lastmile.traveler.service.TravelerService;
 import com.lastmiles.TransferOffer;
 import com.lastmiles.TransferRequest;
 import java.util.List;
+import javax.inject.Singleton;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -23,12 +24,12 @@ import org.springframework.web.bind.annotation.RequestBody;
  *
  * @author David
  */
-
+@Singleton
 @Path("/requests")
 public class ApiController {
     
     @Autowired
-    public ServiceHandler travelerService;
+    public TravelerService travelerService;
     
     @Path("/request")
     @GET
@@ -61,8 +62,21 @@ public class ApiController {
     @Path("/offer/new")
     @POST
     @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
-    public void postOffer(@RequestBody TransferOffer to){ 
-        
-	}  
+    public TransferOffer postOffer(@RequestBody TransferOffer to){
+        return to;
+    } 
+    
+    @Path("/test")
+    @GET
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    public TransferRequest test(){
+        TransferRequest tr = new TransferRequest();
+            tr.setMyName("MyName");
+            tr.setNote("Note");
+            tr.setRequestId("requestId");
+            tr.setPhoneNumber("phoneNumber");
+        return tr;
+       }
+
 }
 

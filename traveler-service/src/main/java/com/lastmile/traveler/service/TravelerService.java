@@ -8,7 +8,7 @@ package com.lastmile.traveler.service;
 import com.lastmile.KafkaEventsService;
 import com.lastmiles.TransferOffer;
 import com.lastmiles.TransferRequest;
-import com.lastmile.traveler.ApiController;
+import com.lastmile.traveler.rest.ApiController;
 import com.lastmile.traveler.utils.UuidGen;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
  * @author David
  */
 @Service
-public class ServiceHandler {    
+public class TravelerService {    
             
     private final KafkaEventsService kafkaEventsService;
         
@@ -37,7 +37,7 @@ public class ServiceHandler {
     private TransferRequest tr;
     
     @Autowired
-    public ServiceHandler(KafkaEventsService kafkaEventsService) { 
+    public TravelerService(KafkaEventsService kafkaEventsService) { 
         this.kafkaEventsService = kafkaEventsService;
         kafkaEventsService.listen(TransferOffer.class, transferOffer ->
                 addOffer(transferOffer));
@@ -54,7 +54,7 @@ public class ServiceHandler {
             kafkaEventsService.produce(tr);
             return tr;
         } catch (IOException ex) {
-            Logger.getLogger(ServiceHandler.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(TravelerService.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
         

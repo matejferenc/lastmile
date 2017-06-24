@@ -1,6 +1,6 @@
-package com.lastmile.app;
+package com.lastmile.traveler.app;
 
-import com.lastmile.traveler.ApiController;
+import com.lastmile.traveler.rest.ApiController;
 import cz.atlascon.travny.jax.TravnyCollectionMessageBodyReaderWriter;
 import cz.atlascon.travny.jax.TravnyMessageBodyReaderWriter;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;

@@ -1,4 +1,4 @@
-package com.lastmile.app;
+package com.lastmile.traveler.app;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
