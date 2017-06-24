@@ -67,7 +67,7 @@
 <div id="user-input-panel">
     <form class="form-group">
     <h2>Create an offer</h2>
-    <input id="refreshButton" onclick="refresh(); return false;" type="submit" value="Refresh map" class="btn btn-primary">
+    <input id="refreshButton" onclick="refreshFromServer(); return false;" type="submit" value="Refresh map" class="btn btn-primary">
     <br/>
     <br/>
     <div id="result-list"></div>
@@ -127,20 +127,35 @@ var data =
 
 function refreshFromServer() {
     var bounds = map.getBounds();
-    var data = {
+    var boundsData = {
         latNorth: bounds.getNorthEast().lat(),
         latSouth: bounds.getSouthWest().lat(),
         lonEast: bounds.getNorthEast().lng(),
         lonWest: bounds.getSouthWest().lng()
     };
-    $.postJSON('http://localhost:8087/rest/places/search', data, function(data, status) {
-        console.log(data);
+    $.postJSON('http://localhost:8087/rest/places/search', boundsData, function(requests, status) {
+        console.log(requests);
+        data = [];
+        for (i = 0; i < requests.length; i++) {
+            var request = requests[i];
+            data.push({
+                requestId: request.requestId,
+                origin: {
+                    lat: request.placeFrom.lat,
+                    lng: request.placeFrom.lon
+                },
+                destination: {
+                    lat: request.placeTo.lat,
+                    lng: request.placeTo.lon
+                }
+            });
+        }
+        refresh();
     });
 };
 
 var markers=[];
 function refresh() {
-refreshFromServer();
     if (markers) {
         $('#result-list').empty();
         for (i = 0; i < markers.length; i++) {
@@ -222,7 +237,7 @@ function createResultRow(requestId, originGps, destinationGps) {
             console.log("Distance: " + distance);
             console.log("Duration:" + duration);
 
-            $('#result-list').append("<div id='request-item-" + requestId + "' class='requestItem' onclick='selectRequest(" + requestId + ")'><img src='img/search_icon.png' onmousemove='drawPath(" + requestId + ");'><span>" + distance + "</span>, <span>" + duration + "</span></div>");
+            $('#result-list').append("<div id='request-item-" + requestId + "' class='requestItem' onclick='selectRequest(\"" + requestId + "\")'><img src='img/search_icon.png' onmousemove='drawPath(\"" + requestId + "\");'><span>" + distance + "</span>, <span>" + duration + "</span></div>");
         }
     });
 }
