@@ -1,6 +1,7 @@
 package com.lastmile.traveler.app;
 
 import com.lastmile.traveler.rest.ApiController;
+import com.lastmile.traveler.rest.TravellerResource;
 import cz.atlascon.travny.jax.TravnyCollectionMessageBodyReaderWriter;
 import cz.atlascon.travny.jax.TravnyMessageBodyReaderWriter;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -25,6 +26,7 @@ public class Config extends ResourceConfig {
         register(MultiPartFeature.class);
         register(TravnyMessageBodyReaderWriter.class);
         register(TravnyCollectionMessageBodyReaderWriter.class);
+        register(TravellerResource.class);
         register(ApiController.class);
     }
 }
