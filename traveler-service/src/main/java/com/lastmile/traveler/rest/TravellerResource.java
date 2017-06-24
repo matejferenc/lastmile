@@ -67,22 +67,24 @@ public class TravellerResource {
 
     @Path("/accept/{offerId}")
     @POST
-    public void accept(@PathParam("offerId") String offerId) throws IOException, InterruptedException {
+    public void accept(@PathParam("offerId") String offerId) throws Exception {
         TransferOffer offer = matchService.getOffer(offerId);
         if (offer == null) {
             return;
         }
-        kafkaEventsService.produce(new TransferOfferAccept().setRequestId(offer.getRequestId()).setOfferId(offerId));
+        Future<RecordMetadata> f = kafkaEventsService.produce(new TransferOfferAccept().setRequestId(offer.getRequestId()).setOfferId(offerId));
+        kafkaEventsService.wait(f);
     }
 
     @Path("/decline/{offerId}")
     @POST
-    public void decline(@PathParam("offerId") String offerId) throws IOException, InterruptedException {
+    public void decline(@PathParam("offerId") String offerId) throws Exception {
         TransferOffer offer = matchService.getOffer(offerId);
         if (offer == null) {
             return;
         }
-        kafkaEventsService.produce(new TransferDecline().setRequestId(offer.getRequestId()).setOfferId(offerId));
+        Future<RecordMetadata> f = kafkaEventsService.produce(new TransferDecline().setRequestId(offer.getRequestId()).setOfferId(offerId));
+        kafkaEventsService.wait(f);
     }
 
 

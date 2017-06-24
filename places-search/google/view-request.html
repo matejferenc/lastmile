@@ -101,6 +101,7 @@
     </form>
 </div>
 <div id="map"></div>
+<h2>Offers:</h2>
 <div id="offers"></div>
 <div id="infowindow-content">
     <img src="" width="16" height="16" id="place-icon">
@@ -129,8 +130,8 @@
 
 
             var requestData = {
-                origin: {"lat" : data.placeFrom.lat, "lng" : data.placeFrom.lon},
-                destination: {"lat" : data.placeTo.lat, "lng" : data.placeTo.lon},
+                origin: {"lat": data.placeFrom.lat, "lng": data.placeFrom.lon},
+                destination: {"lat": data.placeTo.lat, "lng": data.placeTo.lon},
                 travelMode: google.maps.TravelMode.DRIVING
             };
             directionsService.route(requestData, function (response, status) {
@@ -144,10 +145,16 @@
             var offersDiv = "";
             for (var i = 0; i < data.length; i++) {
                 offersDiv += "<div class=\"offer\">";
-                offersDiv += data[i];
+                offersDiv += "<table>";
+                offersDiv += "<tr><td>Price</td><td>" + data[i].price + "</td>";
+                offersDiv += "<tr><td>Phone</td><td>" + data[i].phoneNumber + "</td>";
+                offersDiv += "<tr><td>Email</td><td>" + data[i].email + "</td>";
+                offersDiv += "</table>";
+                offersDiv += "<input class='btn btn-warning' onclick=\"declineOffer(\'" + data[i].offerId + "\'); return false;\" type=\"submit\" value =\"Decline offer\">";
+                offersDiv += "<input class='btn btn-success' onclick=\"acceptOffer(\'"+data[i].offerId+"\'); return false;\" type=\"submit\" value =\"Accept offer\">";
                 offersDiv += "</div>";
             }
-            $("#offers").innerHTML = offersDiv;
+            $("#offers").html(offersDiv);
         });
     });
 
@@ -170,6 +177,18 @@
             headers: {
                 'Accept': 'application/json'
             }
+        });
+    };
+
+    function acceptOffer(offerId) {
+        $.postJSON("http://localhost:8086/rest/accept/" + offerId, null, function (data, status) {
+            window.location.href = "./view-request.html#" + (request.requestId);
+        });
+    };
+
+    function declineOffer(offerId) {
+        $.postJSON("http://localhost:8086/rest/traveller/cancel/" + offerId, null, function (data, status) {
+            window.location.href = "./view-request.html#" + (request.requestId);
         });
     };
 
@@ -244,7 +263,6 @@
             map: map,
             anchorPoint: new google.maps.Point(0, -29)
         });
-
 
 
     }
