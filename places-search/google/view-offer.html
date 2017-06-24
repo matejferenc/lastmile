@@ -107,7 +107,6 @@ function cancel() {
         return;
     }
     $.deleteJSON("http://localhost:8085/rest/transport/offer/" + offer.offerId, function (data, status) {
-        <!--window.location.href = "./view-offer.html#" + (offer.offerId);-->
         window.location.reload();
     });
 };
@@ -119,6 +118,14 @@ function loadOffer(){
         console.log(data);
         $('#price').val(data.price);
         $('#state').val(data.state);
+        if (data.state == "ACCEPTED") {
+            $('#state').css('background-color', '#5cb85c');
+        } else if (data.state == "CANCELLED") {
+            $('#state').css('background-color', '#f0ad4e');
+        } else if (data.state == "DECLINED") {
+            $('#state').css('background-color', '#d9534f');
+        }
+
         $('#ride-id').val(data.requestId);
 
         loadRequest(data.requestId);
