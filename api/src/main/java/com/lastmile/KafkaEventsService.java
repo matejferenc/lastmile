@@ -99,6 +99,24 @@ public class KafkaEventsService implements AutoCloseable {
         });
     }
 
+    public <E extends CustomRecord> void listenForNewOnly(Class<E> cls, Consumer<E> consumer) throws Exception {
+        final KafkaTopic<E> kafkaConsumer = createConsumer(cls);
+        topicListeners.computeIfAbsent(cls.getCanonicalName(), n -> Sets.newHashSet()).add(kafkaConsumer);
+        pollers.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                while (running.get()) {
+                    List<E> list = poll(cls, kafkaConsumer);
+                    for (E e : list) {
+                        consumer.accept(e);
+                    }
+                    Thread.sleep(25);
+                }
+                return null;
+            }
+        });
+    }
+
     public <E extends CustomRecord> void replayAll(Class<E> cls, Consumer<E> consumer, KafkaTopic<E> topic) throws Exception {
         Collection<KafkaTopicPartition> topicPartitions = topic.getTopicPartitions();
         for (KafkaTopicPartition ktp : topicPartitions) {
