@@ -96,32 +96,55 @@
 
 var originGps;
 var destinationGps;
-var startDateTime;
+var requesteTime;
 var peopleCount;
 var phone;
 
 function request() {
-    startDateTime = $('#start-date').val();
     peopleCount = $('#people-count').val();
     phone = $('#phone').val();
     var data = {
-        originGps: originGps,
-        destinationGps: destinationGps,
-        startDateTime: startDateTime,
-        peopleCount: peopleCount,
-        phone: phone
+        placeFrom: {
+            lat: originGps.lat,
+            lon: originGps.lng
+        },
+        placeTo: {
+            lat: destinationGps.lat,
+            lon: destinationGps.lng
+        },
+        requesteTime: requesteTime,
+        peopleCount: parseInt(peopleCount),
+        phoneNumber: phone
     };
-    $.postJSON("localhost:8080/api/createRequest", data, function(data, status){});
+    $.putJSON("http://localhost:8086/rest/traveller/request", data, function(data, status){});
 };
 
 $('.datepicker').datetimepicker({
     format: 'yyyy-mm-dd hh:ii'
+}).on('changeDate', function(ev){
+    console.log(ev.date + " = " + ev.date.getTime() / 1000);
+    requesteTime = ev.date.getTime() / 1000;
 });
 
 
 $.postJSON = function(url, data, callback) {
     return $.ajax({
         'type': 'POST',
+        'url': url,
+        'contentType': 'application/json',
+        'data': JSON.stringify(data),
+        'dataType': 'json',
+        'success': callback,
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    });
+};
+
+$.putJSON = function(url, data, callback) {
+    return $.ajax({
+        'type': 'PUT',
         'url': url,
         'contentType': 'application/json',
         'data': JSON.stringify(data),
