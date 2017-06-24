@@ -1,5 +1,7 @@
 package com.lastmile;
 
+import cz.atlascon.travny.jax.TravnyCollectionMessageBodyReaderWriter;
+import cz.atlascon.travny.jax.TravnyMessageBodyReaderWriter;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,7 @@ public class Config extends ResourceConfig {
     public void registerEndpoints() {
         // jersey
         register(MultiPartFeature.class);
-
+        register(TravnyMessageBodyReaderWriter.class);
+        register(TravnyCollectionMessageBodyReaderWriter.class);
     }
 }
