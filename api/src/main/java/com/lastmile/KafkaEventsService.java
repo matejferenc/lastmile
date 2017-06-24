@@ -2,6 +2,7 @@ package com.lastmile;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import cz.atlascon.travny.data.BinaryWriter;
 import cz.atlascon.travny.records.CustomRecord;
@@ -61,6 +62,19 @@ public class KafkaEventsService implements AutoCloseable {
                 }
             }
         }, 0, 30, TimeUnit.SECONDS);
+    }
+
+    public void wait(Future<RecordMetadata> metadataFuture) throws Exception {
+        RecordMetadata unchecked = Futures.getUnchecked(metadataFuture);
+        String topic = unchecked.topic();
+        int partition = unchecked.partition();
+        long offset = unchecked.offset();
+        Class<?> aClass = Class.forName(topic);
+        KafkaTopic kt = topics.get(aClass);
+        KafkaTopicPartition ktp = kt.getTopicPartition(partition);
+        while (ktp.offset() < offset) {
+            Thread.sleep(25);
+        }
     }
 
     public <E extends CustomRecord> void listen(Class<E> cls, Consumer<E> consumer) throws IOException {
