@@ -63,7 +63,8 @@ public class KafkaEventsService implements AutoCloseable {
         }, 0, 30, TimeUnit.SECONDS);
     }
 
-    public <E extends CustomRecord> void listen(Class<E> cls, Consumer<E> consumer) {
+    public <E extends CustomRecord> void listen(Class<E> cls, Consumer<E> consumer) throws IOException {
+        replayAll(cls, consumer);
         pollers.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
@@ -72,10 +73,30 @@ public class KafkaEventsService implements AutoCloseable {
                     for (E e : list) {
                         consumer.accept(e);
                     }
+                    Thread.sleep(25);
                 }
                 return null;
             }
         });
+    }
+
+    public <E extends CustomRecord> void replayAll(Class<E> cls, Consumer<E> consumer) throws IOException {
+        KafkaTopic topic = topics.computeIfAbsent(cls, c -> {
+            try {
+                return createConsumer(cls);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        Collection<KafkaTopicPartition> topicPartitions = topic.getTopicPartitions();
+        for (KafkaTopicPartition ktp : topicPartitions) {
+            ktp.seek(ktp.getMinOffset());
+            long max = ktp.getMaxOffset();
+            while (ktp.offset() < max - 1) {
+                List<E> l = ktp.poll();
+                l.forEach(m -> consumer.accept(m));
+            }
+        }
     }
 
     public <E extends CustomRecord> List<E> poll(Class<E> cls) {
@@ -166,14 +187,6 @@ public class KafkaEventsService implements AutoCloseable {
         KafkaTopic konsumer = new KafkaTopic(kafkaBootstrapServers, cls, pollTimeoutMillis);
         konsumer.refreshPartitionConsumers();
         konsumers.put(konsumer.getId(), konsumer);
-        konsumer.getTopicPartitions().forEach(ktp -> {
-            KafkaTopicPartition kkk = (KafkaTopicPartition) ktp;
-            try {
-                kkk.seek(kkk.getMinOffset());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
         return konsumer;
     }
 
