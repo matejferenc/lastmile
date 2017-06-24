@@ -52,8 +52,11 @@
         padding: 20px;
       }
       .requestItem {
-        height: 30px;
+        height: 50px;
         cursor: pointer;
+      }
+      .requestItem span {
+        font-size: 120%;
       }
     </style>
     <link rel="stylesheet" href="css/bootstrap.min.css">
@@ -79,9 +82,13 @@
     <label for="phone">Telephone number:</label>
     <input id="phone" type="text" class="form-control">
     <br/>
+    <label for="email">Email:</label>
+    <input id="email" type="email" class="form-control">
+    <br/>
     <input id="submitButton" onclick="offer(); return false;" type="submit" value="Create an offer" class="btn btn-primary">
     <br/>
     </form>
+    <h3 id="offerCreated"></h3>
 </div>
 <div id="map"></div>
 <div id="infowindow-content">
@@ -95,35 +102,7 @@
 var map;
 var directionsService;
 
-var data =
-    [
-        {
-            requestId: '1',
-            origin: {lat: 50.1058987, lng: 14.2688662},
-            destination: {lat: 50.1612703, lng: 14.2593538}
-        },
-        {
-            requestId: '2',
-            origin: {lat: 50.1058987, lng: 14.2688662},
-            destination: {lat: 49.9478347, lng: 14.1045045}
-        },
-        {
-            requestId: '3',
-            origin: {lat: 50.1058987, lng: 14.2688662},
-            destination: {lat: 49.6010519, lng: 14.1875919}
-        },
-        {
-            requestId: '4',
-            origin: {lat: 50.0831588, lng: 14.435583},
-            destination: {lat: 50.2701679, lng: 14.3296028}
-        },
-        {
-            requestId: '5',
-            origin: {lat: 50.0831588, lng: 14.435583},
-            destination: {lat: 50.1282272, lng: 13.4471977}
-        }
-    ]
-;
+var data = [];
 
 function refreshFromServer() {
     var bounds = map.getBounds();
@@ -147,7 +126,9 @@ function refreshFromServer() {
                 destination: {
                     lat: request.placeTo.lat,
                     lng: request.placeTo.lon
-                }
+                },
+                peopleCount: request.peopleCount,
+                requesteTime: request.requesteTime
             });
         }
         refresh();
@@ -166,11 +147,13 @@ function refresh() {
         var originGps = data[i].origin;
         var destinationGps = data[i].destination;
         var requestId = data[i].requestId;
+        var peopleCount = data[i].peopleCount;
+        var requesteTime = data[i].requesteTime;
 
         markers.push(createMarker(originGps));
         markers.push(createInvisibleEndMarker(destinationGps));
 
-        createResultRow(requestId, originGps, destinationGps);
+        createResultRow(requestId, originGps, destinationGps, peopleCount, requesteTime);
 
     }
 };
@@ -221,7 +204,7 @@ function drawPath(requestId) {
     });
 }
 
-function createResultRow(requestId, originGps, destinationGps) {
+function createResultRow(requestId, originGps, destinationGps, peopleCount, requesteTime) {
     var service = new google.maps.DistanceMatrixService();
     service.getDistanceMatrix({
         origins: [originGps],
@@ -235,9 +218,18 @@ function createResultRow(requestId, originGps, destinationGps) {
             var distance = response.rows[0].elements[0].distance.text;
             var duration = response.rows[0].elements[0].duration.text;
             console.log("Distance: " + distance);
-            console.log("Duration:" + duration);
+            console.log("Duration: " + duration);
+            var people = "";
+            if (peopleCount) {
+                if (peopleCount == 1) {
+                    people = "1 person";
+                } else {
+                    people = peopleCount + " people";
+                }
+            }
+            var dateTime = new Date(requesteTime).toLocaleString();
 
-            $('#result-list').append("<div id='request-item-" + requestId + "' class='requestItem' onclick='selectRequest(\"" + requestId + "\")'><img src='img/search_icon.png' onmousemove='drawPath(\"" + requestId + "\");'><span>" + distance + "</span>, <span>" + duration + "</span></div>");
+            $('#result-list').append("<div id='request-item-" + requestId + "' class='requestItem' onclick='selectRequest(\"" + requestId + "\")'><img src='img/search_icon.png' onmousemove='drawPath(\"" + requestId + "\");'><span>" + distance + "</span>, <span>" + duration + "</span>, <span>" + people + "</span><br/><span>" + dateTime + "</span></div>");
         }
     });
 }
@@ -249,10 +241,12 @@ function offer() {
     var data = {
         requestId: selectedRequest.requestId,
         price: parseInt($('#price').val()),
-        phoneNumber: $('#phone').val()
+        phoneNumber: $('#phone').val(),
+        email: $('#email').val()
     };
     $.putJSON("http://localhost:8085/rest/transport/offer", data, function(data, status){
         console.log(data);
+        $('#offerCreated').text("Offer " + data.offerId + " created.");
     });
 };
 
@@ -364,6 +358,7 @@ $.putJSON = function(url, data, callback) {
         directionsDisplay = new google.maps.DirectionsRenderer({ 'draggable': false, 'preserveViewport': true});
         directionsDisplay.setMap(map);
 
+        <!--refreshFromServer();-->
       };
 
 
