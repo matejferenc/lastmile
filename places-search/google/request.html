@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Place Autocomplete</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #description {
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+      }
+
+      #infowindow-content .title {
+        font-weight: bold;
+      }
+
+      #infowindow-content {
+        display: none;
+      }
+
+      #map #infowindow-content {
+        display: inline;
+      }
+
+      #title {
+        color: #fff;
+        background-color: #4d90fe;
+        font-size: 25px;
+        font-weight: 500;
+        padding: 6px 12px;
+      }
+      #user-input-panel {
+        width: 30%;
+        float: left;
+      }
+      #distance {
+
+      }
+      form {
+        padding: 20px;
+      }
+    </style>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-datetimepicker.min.css">
+
+</head>
+<body>
+<script src="js/jquery-3.2.1.min.js"></script>
+<script src="js/bootstrap-datetimepicker.min.js"></script>
+<script src="js/bootstrap.js"></script>
+<div id="user-input-panel">
+    <form class="form-group">
+    <h2>Create a request</h2>
+    <br/>
+    <label for="origin">Starting point:</label>
+    <input id="origin" type="text" placeholder="Enter a location" class="form-control">
+    <br/>
+    <label for="destination">Destination:</label>
+    <input id="destination" type="text" placeholder="Enter a destination" class="form-control">
+    <br/>
+    <label for="start-date">Date:</label>
+    <input id="start-date" class="datepicker form-control" data-date-format="mm/dd/yyyy">
+    <br/>
+    <label for="people-count">Number of passengers:</label>
+    <input id="people-count" type="number" class="form-control">
+    <br/>
+    <label for="phone">Telephone number:</label>
+    <input id="phone" type="text" class="form-control">
+    <br/>
+    <input id="submit" onclick="submit();" type="submit" value="Create a request" class="btn btn-primary">
+    <br/>
+    <h2 id="distance"></h2>
+    <h2 id="duration"></h2>
+    </form>
+</div>
+<div id="map"></div>
+<div id="infowindow-content">
+    <img src="" width="16" height="16" id="place-icon">
+    <span id="place-name"  class="title"></span><br>
+    <span id="place-address"></span>
+</div>
+
+<script>
+
+var originGps;
+var destinationGps;
+var startDateTime;
+var peopleCount;
+var phone;
+
+function submit() {
+    startDateTime = $('#start-date').val();
+    peopleCount = $('#people-count').val();
+    peopleCount = $('#people-count').val();
+    var data = {
+        originGps: originGps,
+        destinationGps: destinationGps,
+        startDateTime: startDateTime,
+        peopleCount: peopleCount,
+        phone: phone
+    };
+    $.postJSON("localhost:8080/api/createRequest", data, function(data, status){});
+};
+
+$('.datepicker').datetimepicker({
+    format: 'yyyy-mm-dd hh:ii'
+});
+
+
+$.postJSON = function(url, data, callback) {
+    return $.ajax({
+        'type': 'POST',
+        'url': url,
+        'contentType': 'application/json',
+        'data': JSON.stringify(data),
+        'dataType': 'json',
+        'success': callback,
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    });
+};
+
+
+      // This example requires the Places library. Include the libraries=places
+      // parameter when you first load the API. For example:
+      // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+
+      function initMap() {
+        var map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: 50.0755, lng: 14.4378},
+          zoom: 10
+        });
+        var types = document.getElementById('type-selector');
+        var strictBounds = document.getElementById('strict-bounds-selector');
+
+
+
+        google.maps.event.addListener(map, "click", function (e) {
+            //lat and lng is available in e object
+            var latLng = e.latLng;
+            console.log(latLng);
+        });
+
+        var directionsService = new google.maps.DirectionsService();
+        var directionsDisplay = new google.maps.DirectionsRenderer({ 'draggable': false });
+        directionsDisplay.setMap(map);
+
+
+
+
+//desetination autocomplete
+        var destinationAutocomplete = new google.maps.places.Autocomplete(destination);
+        destinationAutocomplete.bindTo('bounds', map);
+        var destinationMarker = new google.maps.Marker({
+          map: map,
+          anchorPoint: new google.maps.Point(0, -29)
+        });
+        destinationAutocomplete.addListener('place_changed', function() {
+          infowindow.close();
+          destinationMarker.setVisible(false);
+          var place = destinationAutocomplete.getPlace();
+          if (!place.geometry) {
+            window.alert("No details available for input: '" + place.name + "'");
+            return;
+          }
+
+          map.setCenter(place.geometry.location);
+          map.setZoom(13);
+
+          destinationMarker.setPosition(place.geometry.location);
+          destinationMarker.setVisible(true);
+          console.log("destination selected: " + place.name + " " + place.id);
+
+          var lat = place.geometry.location.lat();
+          var lng = place.geometry.location.lng();
+          destinationGps = {lat:lat, lng:lng};
+
+          var address = '';
+          if (place.address_components) {
+            address = [
+              (place.address_components[0] && place.address_components[0].short_name || ''),
+              (place.address_components[1] && place.address_components[1].short_name || ''),
+              (place.address_components[2] && place.address_components[2].short_name || '')
+            ].join(' ');
+          }
+
+          infowindowContent.children['place-icon'].src = place.icon;
+          infowindowContent.children['place-name'].textContent = place.name;
+          infowindowContent.children['place-address'].textContent = address;
+          infowindow.open(map, destinationMarker);
+
+          var current_bounds = map.getBounds();
+          var marker_pos = marker.getPosition();
+
+          if( !current_bounds.contains( marker_pos ) ){
+
+            var new_bounds = current_bounds.extend( marker_pos );
+            map.fitBounds( new_bounds );
+          }
+
+
+          var request = {
+                origin: originGps,
+                destination: destinationGps,
+                travelMode: google.maps.TravelMode.DRIVING
+            };
+            directionsService.route(request, function (response, status) {
+                if (status == google.maps.DirectionsStatus.OK) {
+                    directionsDisplay.setDirections(response);
+                }
+            });
+
+
+            var service = new google.maps.DistanceMatrixService();
+            service.getDistanceMatrix({
+                origins: [originGps],
+                destinations: [destinationGps],
+                travelMode: google.maps.TravelMode.DRIVING,
+                unitSystem: google.maps.UnitSystem.METRIC,
+                avoidHighways: false,
+                avoidTolls: false
+            }, function (response, status) {
+                if (status == google.maps.DistanceMatrixStatus.OK && response.rows[0].elements[0].status != "ZERO_RESULTS") {
+                    var distance = response.rows[0].elements[0].distance.text;
+                    var duration = response.rows[0].elements[0].duration.text;
+                    console.log("Distance: " + distance);
+                    console.log("Duration:" + duration);
+                    $('#distance').text(distance);
+                    $('#duration').text(duration);
+                }
+            });
+        });
+
+
+        var autocomplete = new google.maps.places.Autocomplete(origin);
+
+        // Bind the map's bounds (viewport) property to the autocomplete object,
+        // so that the autocomplete requests use the current map bounds for the
+        // bounds option in the request.
+        autocomplete.bindTo('bounds', map);
+
+        var infowindow = new google.maps.InfoWindow();
+        var infowindowContent = document.getElementById('infowindow-content');
+        infowindow.setContent(infowindowContent);
+        var marker = new google.maps.Marker({
+          map: map,
+          anchorPoint: new google.maps.Point(0, -29)
+        });
+
+        autocomplete.addListener('place_changed', function() {
+          infowindow.close();
+          marker.setVisible(false);
+          var place = autocomplete.getPlace();
+          if (!place.geometry) {
+            // User entered the name of a Place that was not suggested and
+            // pressed the Enter key, or the Place Details request failed.
+            window.alert("No details available for input: '" + place.name + "'");
+            return;
+          }
+
+          map.setCenter(place.geometry.location);
+          map.setZoom(13);
+
+          marker.setPosition(place.geometry.location);
+          marker.setVisible(true);
+          console.log("place selected: " + place.name + " " + place.id + " " + place.geometry.location);
+
+          var lat = place.geometry.location.lat();
+          var lng = place.geometry.location.lng();
+          originGps = {lat:lat, lng:lng};
+
+          var address = '';
+          if (place.address_components) {
+            address = [
+              (place.address_components[0] && place.address_components[0].short_name || ''),
+              (place.address_components[1] && place.address_components[1].short_name || ''),
+              (place.address_components[2] && place.address_components[2].short_name || '')
+            ].join(' ');
+          }
+
+          infowindowContent.children['place-icon'].src = place.icon;
+          infowindowContent.children['place-name'].textContent = place.name;
+          infowindowContent.children['place-address'].textContent = address;
+          infowindow.open(map, marker);
+        });
+
+      }
+    </script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBERgplsRjMcAkFoTcFVeq5Q7--TKxLVPA&libraries=places&callback=initMap"
+        async defer></script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Place Autocomplete</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #description {
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+      }
+
+      #infowindow-content .title {
+        font-weight: bold;
+      }
+
+      #infowindow-content {
+        display: none;
+      }
+
+      #map #infowindow-content {
+        display: inline;
+      }
+
+      #title {
+        color: #fff;
+        background-color: #4d90fe;
+        font-size: 25px;
+        font-weight: 500;
+        padding: 6px 12px;
+      }
+      #user-input-panel {
+        width: 30%;
+        float: left;
+      }
+      #distance {
+
+      }
+      form {
+        padding: 20px;
+      }
+    </style>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-datetimepicker.min.css">
+
+</head>
+<body>
+<script src="js/jquery-3.2.1.min.js"></script>
+<script src="js/bootstrap-datetimepicker.min.js"></script>
+<script src="js/bootstrap.js"></script>
+<div id="user-input-panel">
+    <form class="form-group">
+    <h2>Create an offer</h2>
+    <br/>
+    <input id="submit" onclick="submit();" type="submit" value="Create an offer" class="btn btn-primary">
+    <br/>
+    <h2 id="distance"></h2>
+    <h2 id="duration"></h2>
+    </form>
+</div>
+<div id="map"></div>
+<div id="infowindow-content">
+    <img src="" width="16" height="16" id="place-icon">
+    <span id="place-name"  class="title"></span><br>
+    <span id="place-address"></span>
+</div>
+
+<script>
+
+var data = {
+    [
+        {
+            origin: {lat: 50.1058987, lng: 14.2688662},
+            destination: {lat: 50.1612703, lng: 14.2593538}
+        },
+        {
+            origin: {lat: 50.1058987, lng: 14.2688662},
+            destination: {lat: 49.9478347, lng: 14.1045045}
+        },
+        {
+            origin: {lat: 50.1058987, lng: 14.2688662},
+            destination: {lat: 49.6010519, lng: 14.1875919}
+        },
+        {
+            origin: {lat: 50.0831588, lng: 14.435583},
+            destination: {lat: 50.2701679, lng: 14.3296028}
+        },
+        {
+            origin: {lat: 50.0831588, lng: 14.435583},
+            destination: {lat: 50.1282272, lng: 13.4471977}
+        }
+    ]
+};
+
+function submit() {
+};
+
+$('.datepicker').datetimepicker({
+    format: 'yyyy-mm-dd hh:ii'
+});
+
+
+$.postJSON = function(url, data, callback) {
+    return $.ajax({
+        'type': 'POST',
+        'url': url,
+        'contentType': 'application/json',
+        'data': JSON.stringify(data),
+        'dataType': 'json',
+        'success': callback,
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    });
+};
+
+
+      // This example requires the Places library. Include the libraries=places
+      // parameter when you first load the API. For example:
+      // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+
+      function initMap() {
+        var map = new google.maps.Map(document.getElementById('map'), {
+          center: {lat: 50.0755, lng: 14.4378},
+          zoom: 10
+        });
+        var types = document.getElementById('type-selector');
+        var strictBounds = document.getElementById('strict-bounds-selector');
+
+
+        google.maps.event.addListener(map, "click", function (e) {
+            //lat and lng is available in e object
+            var latLng = e.latLng;
+            console.log(latLng);
+        });
+
+        var directionsService = new google.maps.DirectionsService();
+        var directionsDisplay = new google.maps.DirectionsRenderer({ 'draggable': true });
+        directionsDisplay.setMap(map);
+
+
+      }
+    </script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBERgplsRjMcAkFoTcFVeq5Q7--TKxLVPA&libraries=places&callback=initMap"
+        async defer></script>
+</body>
+</html>
