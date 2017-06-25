@@ -1,0 +1,70 @@
+record com.lastmiles.TransferRequest {
+   string requestId;
+   string sourcePlaceId;
+   string targetPlaceId;
+   // epoch millis
+   long requesteTime;
+   string myName;
+   string phoneNumber;
+   string note;
+   com.lastmile.Place placeFrom;
+   com.lastmile.Place placeTo;
+   com.lastmiles.TransferRequestState state;
+   string matchedOfferId;
+   int peopleCount;
+   string email;
+}
+  record com.lastmiles.TransferOfferAccept {
+   string offerId;
+   string requestId;
+}
+enum com.lastmiles.TransferOfferState {
+ ACCEPTED, DECLINED, CANCELLED, NEW
+}
+@Deprecated
+record io.test {
+  string test;
+}
+  record com.lastmiles.TransferOfferCancel {
+   string offerId;
+   string requestId;
+   string reason;
+}
+enum com.lastmiles.TransferRequestState {
+  NEW, MATCHED, CANCELLED
+}
+record com.lastmiles.PlaceSearchRequest {
+  double latNorth;
+  double latSouth;
+  double lonEast;
+  double lonWest;
+}
+record com.lastmile.Place {
+  string name;
+  double lat;
+  double lon;
+  @Removed
+  string source;
+  @Removed 
+  string sourceId;
+}
+ record com.lastmiles.TransferRequestCancel {
+   string requestId;
+   string reason;
+}
+  record com.lastmiles.TransferDecline {
+   string offerId;
+   string requestId;
+   string reason;
+}
+record com.lastmiles.TransferOffer {
+   string offerId;
+   string requestId;
+   long price;
+   string currency;
+   string myName;
+   string phoneNumber;
+   string note;
+   com.lastmiles.TransferOfferState state;
+   string email;
+}
